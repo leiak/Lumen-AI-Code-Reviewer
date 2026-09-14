@@ -1206,18 +1206,90 @@ ENTRYPOINT ["java", "-jar", "/app/review.jar"]
 
 ## 附录 A：技术栈与版本
 
+> **确认日期**：2026-09-14，基于 Maven Central 实时查询。
+
 | 组件 | 版本 | 说明 |
 |---|---|---|
-| Java | 21 LTS | Spring Boot 3 + LangGraph4j 要求 |
+| Java | 21 LTS | 三框架最低要求 |
 | Spring Boot | 3.3.x | Web / Config / Actuator |
-| Spring AI | 1.0.x | ChatClient / EmbeddingClient / VectorStore |
-| LangGraph4j | 最新稳定版 | StateGraph + Send API |
-| JamJet | 最新稳定版 | 持久化 + 审计 + interrupt |
+| Spring AI | **2.0.0 GA** | ChatClient 默认 Anthropic Claude；含 MCP |
+| LangGraph4j | **1.6.0** | StateGraph + Send API（最新稳定版） |
+| JamJet Agent SDK | **0.4.0** | `dev.jamjet:jamjet-agent` |
+| JamJet Spring AI Starter | **0.1.0** | `dev.jamjet:jamjet-spring-boot-starter`（Spring AI 集成） |
+| JamJet Runtime Starter | **0.1.1** | `dev.jamjet:jamjet-runtime-spring-boot-starter`（嵌入式运行时） |
 | Picocli | 4.7.x | CLI 框架 |
 | SQLite JDBC | 3.45.x | 默认持久化 |
 | Jackson | 2.17.x | JSON 序列化 |
 | JUnit 5 | 5.10.x | 测试框架 |
 | Testcontainers | 1.20.x | 集成测试 |
+
+**Maven 依赖示例**：
+
+```xml
+<dependencyManagement>
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework.ai</groupId>
+      <artifactId>spring-ai-bom</artifactId>
+      <version>2.0.0</version>
+      <type>pom</type>
+      <scope>import</scope>
+    </dependency>
+  </dependencies>
+</dependencyManagement>
+
+<dependencies>
+  <!-- Spring AI 2.0（多 provider） -->
+  <dependency>
+    <groupId>org.springframework.ai</groupId>
+    <artifactId>spring-ai-starter-model-anthropic</artifactId>
+  </dependency>
+  <dependency>
+    <groupId>org.springframework.ai</groupId>
+    <artifactId>spring-ai-starter-model-openai</artifactId>
+  </dependency>
+  <dependency>
+    <groupId>org.springframework.ai</groupId>
+    <artifactId>spring-ai-starter-model-ollama</artifactId>
+  </dependency>
+
+  <!-- LangGraph4j 1.6 -->
+  <dependency>
+    <groupId>org.bsc.langgraph4j</groupId>
+    <artifactId>langgraph4j-core</artifactId>
+    <version>1.6.0</version>
+  </dependency>
+
+  <!-- JamJet 0.4（Agent + Spring AI 集成 + 嵌入式运行时） -->
+  <dependency>
+    <groupId>dev.jamjet</groupId>
+    <artifactId>jamjet-agent</artifactId>
+    <version>0.4.0</version>
+  </dependency>
+  <dependency>
+    <groupId>dev.jamjet</groupId>
+    <artifactId>jamjet-spring-boot-starter</artifactId>
+    <version>0.1.0</version>
+  </dependency>
+  <dependency>
+    <groupId>dev.jamjet</groupId>
+    <artifactId>jamjet-runtime-spring-boot-starter</artifactId>
+    <version>0.1.1</version>
+  </dependency>
+</dependencies>
+```
+
+### 分层职责最终确认
+
+| 层 | 框架 | 我们写什么 | 框架做什么 |
+|---|---|---|---|
+| **模型 & 工具** | Spring AI 2.0 | 配置 `application.yml` 里的 provider / key；选模型 | ChatClient、EmbeddingClient、MCP 客户端、多 provider 路由 |
+| **编排** | LangGraph4j 1.6 | StateGraph 定义、节点实现、并行 Send | 图执行引擎、状态传递、Send/Command API |
+| **运行时** | JamJet 0.4 | 配置 budget、声明 `@DurableAgent`、选后端（SQLite/PG） | 持久化（state snapshot）、审计（事件日志）、interrupt/resume、@Checkpoint |
+
+**原则**：编排层（节点协议、HumanGate、Council 配置）我们手写；底座（持久化、审计、预算熔断）交给 JamJet。
+
+
 
 ## 附录 B：项目结构
 
