@@ -2,6 +2,7 @@ package com.review.council;
 
 import com.review.council.cli.ReviewCli;
 import org.springframework.boot.SpringApplication;
+import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
 import picocli.CommandLine;
@@ -9,17 +10,26 @@ import picocli.CommandLine;
 @SpringBootApplication
 public class CouncilApplication {
     public static void main(String[] args) {
+        // Detect: 'serve' → web mode; everything else → CLI mode
+        boolean serveMode = args.length > 0 && args[0].equals("serve");
+
         SpringApplication app = new SpringApplication(CouncilApplication.class);
-        app.setWebApplicationType(org.springframework.boot.WebApplicationType.NONE);
+        if (!serveMode) {
+            app.setWebApplicationType(WebApplicationType.NONE);
+        }
         var ctx = app.run(args);
         try {
+            if (serveMode) {
+                System.out.println("Web server started. Use the API at http://localhost:8080");
+                System.out.println("Press Ctrl+C to stop.");
+                return; // keep server running
+            }
             var cli = ctx.getBean(ReviewCli.class);
-            // Use Spring context to resolve @Component subcommands
             CommandLine.IFactory factory = new SpringCommandFactory(ctx);
             int code = new CommandLine(cli, factory).execute(args);
             System.exit(code);
         } finally {
-            ctx.close();
+            if (!serveMode) ctx.close();
         }
     }
 

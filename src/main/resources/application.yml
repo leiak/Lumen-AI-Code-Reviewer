@@ -1,8 +1,6 @@
 spring:
   application:
     name: review-council
-  main:
-    web-application-type: none
   autoconfigure:
     exclude:
       - org.springframework.ai.model.openai.autoconfigure.OpenAiChatAutoConfiguration
@@ -14,6 +12,11 @@ spring:
       - org.springframework.ai.model.anthropic.autoconfigure.AnthropicChatAutoConfiguration
       - org.springframework.ai.model.ollama.autoconfigure.OllamaChatAutoConfiguration
       - org.springframework.ai.model.ollama.autoconfigure.OllamaEmbeddingAutoConfiguration
+
+server:
+  port: 8080
+  error:
+    include-message: always
 
 review:
   data-dir: ${REVIEW_DATA_DIR:./.review-data}

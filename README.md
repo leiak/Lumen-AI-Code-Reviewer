@@ -24,6 +24,16 @@ java -jar target/review.jar cost rev-abc12345
 
 # 打印 LangGraph4j StateGraph 拓扑 (Mermaid)
 java -jar target/review.jar graph --config=council.yaml
+
+# 启动 Web API (端口 8080，配置改用 --server.port=N)
+java -jar target/review.jar serve --server.port=8090
+
+# 调用 API
+curl -s http://localhost:8090/health
+curl -s -X POST -H "Content-Type: text/plain" --data-binary @council.yaml http://localhost:8090/validate
+curl -s -X POST -H "Content-Type: application/json" -d '{"yaml":"...","diff":"..."}' http://localhost:8090/sessions
+curl -s http://localhost:8090/sessions/rev-abc12345/cost
+curl -s "http://localhost:8090/sessions/rev-abc12345/graph?format=mermaid"
 ```
 
 ## 当前实现的功能
@@ -38,8 +48,8 @@ java -jar target/review.jar graph --config=council.yaml
 | 预算（token/cost）追踪 + 超限 abort | ✅ |
 | SQLite 持久化（sessions/snapshots/audit/llm_calls） | ✅ |
 | LLM 调用成本/延迟审计 | ✅ |
-| CLI：run / validate / cost | ✅ |
-| Web API | ⏳ v1.1 |
+| CLI：run / validate / cost / graph | ✅ |
+| Web API：/health /validate /sessions /cost /graph | ✅ |
 | LangGraph4j StateGraph 拓扑定义 + 并行 dispatch | ✅（CLI `graph` 显示 Mermaid/PlantUML） |
 
 ## 测试覆盖
@@ -89,19 +99,20 @@ budget:
 
 ```
 src/main/java/com/review/council/
-├── CouncilApplication.java      # Spring Boot 入口
+├── CouncilApplication.java      # Spring Boot 入口（CLI 模式默认 / serve 模式 Web）
 ├── ai/                          # ChatClient 多 provider
 ├── aggregator/                  # Aggregator + Jaccard dedup
 ├── audit/                       # AuditRepository + LlmCallRepository
-├── cli/                         # Picocli 命令
+├── cli/                         # Picocli 命令（run/validate/cost/graph）
 ├── config/                      # CouncilConfig + 8 个子配置 + YAML 解析
 ├── fixer/                       # GenericFixerNode + PatchApplier
 ├── gate/                        # GateEvaluator + Node
-├── graph/                       # CouncilOrchestrator
+├── graph/                       # CouncilOrchestrator + CouncilStateGraphRunner
 ├── nodes/                       # 节点接口 + NodeContext
 ├── persistence/                 # SessionRepository + StateSnapshotRepository + DataSource
 ├── reviewer/                    # GenericReviewerNode + FindingParser + ReReviewer
-└── state/                       # ReviewState + Finding + Patch + CodeDiff + Budget
+├── state/                       # ReviewState + Finding + Patch + CodeDiff + Budget
+└── web/                         # ReviewController (REST)
 
 src/main/resources/
 ├── application.yml              # Spring Boot 配置
