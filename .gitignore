@@ -28,3 +28,10 @@ logs/
 # Local config
 *.local
 application-local.yml
+
+# Maven
+target/
+*.class
+.mvn/
+mvnw
+mvnw.cmd
