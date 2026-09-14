@@ -21,6 +21,9 @@ java -jar target/review.jar run HEAD
 
 # 查看成本
 java -jar target/review.jar cost rev-abc12345
+
+# 打印 LangGraph4j StateGraph 拓扑 (Mermaid)
+java -jar target/review.jar graph --config=council.yaml
 ```
 
 ## 当前实现的功能
@@ -37,12 +40,12 @@ java -jar target/review.jar cost rev-abc12345
 | LLM 调用成本/延迟审计 | ✅ |
 | CLI：run / validate / cost | ✅ |
 | Web API | ⏳ v1.1 |
-| LangGraph4j StateGraph + Send 并行 | ⏳ v1.1（当前用直接编排） |
+| LangGraph4j StateGraph 拓扑定义 + 并行 dispatch | ✅（CLI `graph` 显示 Mermaid/PlantUML） |
 
 ## 测试覆盖
 
 ```
-Tests run: 22, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 23, Failures: 0, Errors: 0, Skipped: 0
 - ReviewState / Budget / immutable state transitions
 - CouncilConfig YAML 解析（含 human-gates / budget / path-rules）
 - PromptTemplate 占位符渲染
@@ -51,6 +54,7 @@ Tests run: 22, Failures: 0, Errors: 0, Skipped: 0
 - GateEvaluator per-reviewer + path-rule 优先级
 - PatchApplier 文件替换
 - SessionRepository / StateSnapshotRepository / AuditRepository / LlmCallRepository
+- StateGraphIntegrationTest 真实构建 LangGraph4j StateGraph 并验证 5 个节点（Spring context）
 ```
 
 ## 配置示例
@@ -117,5 +121,5 @@ src/main/resources/
 | 构建工具 | Gradle | Maven | 当前环境无 Gradle |
 | JamJet | 0.4.0 | SQLite 直连 | 阿里云镜像无对应 artifact |
 | Spring AI | 2.0.0 | 1.1.0 | 2.0 国内镜像下载慢；API 一致 |
-| Graph 编排 | LangGraph4j StateGraph | 直接循环 | MVP 简化；v1.1 升级 |
+| Graph 编排 | LangGraph4j StateGraph + 拓扑 + 并行 dispatch | ✅ StateGraph 已上线，`graph` 命令可视化 | 并行 reviewer 在 dispatch 节点内用 ExecutorService |
 | Jaccard 阈值 | 0.85 | 0.7 | 实际 LLM 输出词序变化多，0.85 太严格 |

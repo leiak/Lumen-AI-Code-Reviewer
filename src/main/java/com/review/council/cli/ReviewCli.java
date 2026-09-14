@@ -3,6 +3,7 @@ package com.review.council.cli;
 import com.review.council.config.CouncilConfig;
 import com.review.council.config.CouncilConfigYamlLoader;
 import com.review.council.graph.CouncilOrchestrator;
+import com.review.council.graph.CouncilStateGraphRunner;
 import com.review.council.persistence.SessionRepository;
 import com.review.council.state.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +24,7 @@ import java.util.concurrent.Callable;
     mixinStandardHelpOptions = true,
     version = "review 1.0.0",
     description = "AI Code Review Council",
-    subcommands = { ReviewCli.RunCmd.class, ReviewCli.ValidateCmd.class, ReviewCli.CostCmd.class }
+    subcommands = { ReviewCli.RunCmd.class, ReviewCli.ValidateCmd.class, ReviewCli.CostCmd.class, ReviewCli.GraphCmd.class }
 )
 public class ReviewCli implements Runnable {
     @Override public void run() {
@@ -143,6 +144,35 @@ public class ReviewCli implements Runnable {
         @Override
         public Integer call() {
             System.out.printf("Session %s total cost: $%.4f%n", sessionId, orchestrator.totalCost(sessionId));
+            return 0;
+        }
+    }
+
+    @Component
+    @Command(name = "graph", description = "Print the LangGraph4j StateGraph topology (Mermaid)")
+    public static class GraphCmd implements Callable<Integer> {
+        @Autowired CouncilStateGraphRunner runner;
+        @Autowired CouncilConfigYamlLoader loader;
+
+        @Option(names = "--config", defaultValue = "./council.yaml")
+        String configPath;
+
+        @Option(names = "--format", defaultValue = "mermaid",
+            description = "Output format: ${COMPLETION-CANDIDATES}")
+        String format;
+
+        @Override
+        public Integer call() throws Exception {
+            com.review.council.config.CouncilConfig config;
+            try (var in = new FileInputStream(configPath)) {
+                config = loader.load(in);
+            }
+            var graph = runner.defineGraph(config);
+            var type = switch (format.toLowerCase()) {
+                case "plantuml" -> org.bsc.langgraph4j.GraphRepresentation.Type.PLANTUML;
+                default -> org.bsc.langgraph4j.GraphRepresentation.Type.MERMAID;
+            };
+            System.out.println(graph.getGraph(type, config.name()).content());
             return 0;
         }
     }
