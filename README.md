@@ -51,6 +51,7 @@ curl -s "http://localhost:8090/sessions/rev-abc12345/graph?format=mermaid"
 | CLI：run / validate / cost / graph | ✅ |
 | Web API：/health /validate /sessions /cost /graph | ✅ |
 | LangGraph4j StateGraph 拓扑定义 + 并行 dispatch | ✅（CLI `graph` 显示 Mermaid/PlantUML） |
+| Demo repo（含 SQL 注入 / N+1 / 资源泄漏 / 硬编码密钥） | ✅ `demo-repo/` |
 
 ## 测试覆盖
 
@@ -124,6 +125,26 @@ src/main/resources/
 
 - 设计文档：`docs/superpowers/specs/2026-09-14-ai-code-review-council-design.md`
 - 实施计划：`docs/superpowers/plans/2026-09-14-ai-code-review-council-plan.md`
+- Demo repo：`demo-repo/`（含 SQL 注入 / N+1 / 资源泄漏 / 硬编码密钥，可直接 `review run`）
+
+## 快速演示（不需要 API key 的部分）
+
+```bash
+# 1. 验证配置文件
+java -jar target/review.jar validate --config=council.yaml
+
+# 2. 打印 LangGraph4j StateGraph 拓扑（真实图）
+java -jar target/review.jar graph --config=council.yaml
+
+# 3. 启动 Web API 并 curl 测试
+java -jar target/review.jar serve --server.port=8090 &
+curl -s http://localhost:8090/health
+curl -s -X POST -H "Content-Type: text/plain" --data-binary @council.yaml http://localhost:8090/validate
+
+# 4. 跑 demo（需要 ANTHROPIC_API_KEY）
+export ANTHROPIC_API_KEY=sk-ant-...
+java -jar target/review.jar run --config=council.yaml
+```
 
 ## 调整说明（vs spec）
 
