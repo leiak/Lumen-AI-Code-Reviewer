@@ -3,7 +3,9 @@ package com.review.council.persistence;
 import javax.sql.DataSource;
 import java.sql.*;
 import java.util.Optional;
+import org.springframework.stereotype.Component;
 
+@Component
 public class StateSnapshotRepository {
     private final DataSource ds;
     public StateSnapshotRepository(DataSource ds) { this.ds = ds; }

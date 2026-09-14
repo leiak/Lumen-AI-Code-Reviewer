@@ -3,7 +3,9 @@ package com.review.council.persistence;
 import javax.sql.DataSource;
 import java.sql.*;
 import java.util.Optional;
+import org.springframework.stereotype.Component;
 
+@Component
 public class SessionRepository {
     private final DataSource ds;
     public SessionRepository(DataSource ds) { this.ds = ds; }

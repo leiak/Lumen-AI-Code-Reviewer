@@ -1,0 +1,43 @@
+council:
+  name: team-java-backend
+  version: "1.0"
+loop:
+  max-rounds: 2
+  early-stop: no-critical-and-no-major
+reviewers:
+  - role: architect
+    model: claude-sonnet-5-20250929
+    prompt-file: prompts/architect.md
+  - role: security
+    model: claude-sonnet-5-20250929
+    prompt-file: prompts/security.md
+  - role: perf
+    model: claude-sonnet-5-20250929
+    prompt-file: prompts/perf.md
+human-gates:
+  default: never
+  per-reviewer:
+    security:
+      - severity: critical
+        action: must_approve
+  path-rules:
+    - pattern: "**/auth/**"
+      gate: always
+fixer:
+  model: claude-sonnet-5-20250929
+  prompt-file: prompts/fixer.md
+  auto-apply: never
+re-reviewer:
+  enabled: true
+  model: claude-sonnet-5-20250929
+  prompt-file: prompts/re-review.md
+  focus: [regression, test_pass]
+budget:
+  max-tokens: 200000
+  max-time-seconds: 600
+  max-cost-usd: "1.00"
+  on-exceeded: abort
+output:
+  format: [markdown]
+  include-applied-diffs: true
+  save-to: .review-history/

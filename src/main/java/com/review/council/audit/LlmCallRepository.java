@@ -2,7 +2,9 @@ package com.review.council.audit;
 
 import javax.sql.DataSource;
 import java.sql.*;
+import org.springframework.stereotype.Component;
 
+@Component
 public class LlmCallRepository {
     private final DataSource ds;
     public LlmCallRepository(DataSource ds) { this.ds = ds; }

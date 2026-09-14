@@ -2,7 +2,9 @@ package com.review.council.audit;
 
 import javax.sql.DataSource;
 import java.sql.*;
+import org.springframework.stereotype.Component;
 
+@Component
 public class AuditRepository {
     private final DataSource ds;
     public AuditRepository(DataSource ds) { this.ds = ds; }

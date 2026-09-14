@@ -56,6 +56,6 @@ CREATE TABLE IF NOT EXISTS tool_calls (
     timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_sessions_status ON review_sessions(status);
-CREATE INDEX idx_snapshots_session ON state_snapshots(session_id);
-CREATE INDEX idx_audit_session ON audit_events(session_id, timestamp);
+CREATE INDEX IF NOT EXISTS idx_sessions_status ON review_sessions(status);
+CREATE INDEX IF NOT EXISTS idx_snapshots_session ON state_snapshots(session_id);
+CREATE INDEX IF NOT EXISTS idx_audit_session ON audit_events(session_id, timestamp);
