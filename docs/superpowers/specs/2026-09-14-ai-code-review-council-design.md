@@ -162,15 +162,16 @@ public record ReviewState(
                     └──────────┬──────────┘
                                │
               ┌────────────────┼─────────────────┐
-              │ no findings    │ critical       │ major/minor only
-              ▼                ▼                 ▼
-       ┌────────────┐   ┌──────────────┐   ┌────────────┐
-       │   DONE     │   │ GateEvaluator│   │ GateEval   │
-       │ (clean PR) │   │  (闸门判定)  │   │ (按规则问) │
-       └────────────┘   └──────┬───────┘   └──────┬─────┘
-                              │                  │
-                              └────────┬─────────┘
-                                       ▼
+              │ no findings    │ 有 finding        │
+              ▼                ▼                 
+       ┌────────────┐   ┌──────────────┐        
+       │   DONE     │   │ GateEvaluator│        
+       │ (clean PR) │   │  (闸门判定)  │        
+       └────────────┘   └──────┬───────┘        
+                              │ 按规则决定：     
+                              ├─ 需要 gate → JamJet interrupt
+                              └─ 自动通过 → 直达 Fixer
+                              ▼
                                 ┌─────────────┐
                                 │   Fixer     │  ← 生成 patches
                                 │   In: find  │
