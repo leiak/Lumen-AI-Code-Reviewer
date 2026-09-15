@@ -13,7 +13,7 @@ java -jar target/review.jar serve --server.port=8090
 
 # 3. start dev server
 npm run dev
-# → http://localhost:5173
+# → http://localhost:5789
 ```
 
 ## Pages

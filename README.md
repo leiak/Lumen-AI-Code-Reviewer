@@ -149,7 +149,7 @@ java -jar target/review.jar run --config=council.yaml
 # 5. 启动前端（需要 Node 18+）
 cd frontend
 npm install
-npm run dev    # → http://localhost:5173（自动代理 /api → :8090）
+npm run dev    # → http://localhost:5789（自动代理 /api → :8090）
 ```
 
 ## 前端
