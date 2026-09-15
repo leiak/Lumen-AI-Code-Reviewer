@@ -66,4 +66,35 @@ class PathScannerTest {
         var entries = scanner.scan();
         assertThat(entries).extracting(FileEntry::path).containsExactly("small.java");
     }
+
+    @Test
+    void excludes_target_dir_via_path_pattern(@TempDir Path repoDir) throws Exception {
+        runGit(repoDir, "init");
+        runGit(repoDir, "config", "user.email", "t@t");
+        runGit(repoDir, "config", "user.name", "t");
+        Files.createDirectories(repoDir.resolve("target"));
+        Files.writeString(repoDir.resolve("target/Generated.java"), "class G {}");
+        Files.writeString(repoDir.resolve("src.java"), "class S {}");
+
+        var scanner = new PathScanner(ScanOptions.defaults().withPath(repoDir.toString()));
+        var entries = scanner.scan();
+        assertThat(entries).extracting(FileEntry::path)
+            .containsExactly("src.java");
+    }
+
+    @Test
+    void skips_binary_file_with_nul_byte(@TempDir Path repoDir) throws Exception {
+        runGit(repoDir, "init");
+        runGit(repoDir, "config", "user.email", "t@t");
+        runGit(repoDir, "config", "user.name", "t");
+        Files.writeString(repoDir.resolve("src.java"), "class S {}");
+        Files.write(repoDir.resolve("looks-like-java.java"),
+            new byte[]{'c', 'l', 'a', 's', 's', ' ', 'X', 0x00, ' ', '{', '}'});  // NUL byte inside
+        Files.writeString(repoDir.resolve("not-binary.java"), "class NB {}");
+
+        var scanner = new PathScanner(ScanOptions.defaults().withPath(repoDir.toString()));
+        var entries = scanner.scan();
+        assertThat(entries).extracting(FileEntry::path)
+            .containsExactlyInAnyOrder("src.java", "not-binary.java");
+    }
 }

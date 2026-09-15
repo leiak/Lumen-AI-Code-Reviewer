@@ -23,13 +23,36 @@ public class PathScanner {
         return gitLsFiles(root).stream()
             .filter(this::matchesInclude)
             .filter(rel -> !matchesExclude(rel))
+            .filter(rel -> !matchesExcludePath(rel))
             .map(rel -> {
                 var content = readFile(root, rel);
                 return new FileEntry(rel, content, estimateTokens(content));
             })
             .filter(e -> !e.content().isEmpty())
+            .filter(e -> !looksBinary(e.content()))
             .filter(e -> e.content().length() <= opts.maxFileSizeBytes())
             .toList();
+    }
+
+    private boolean matchesExcludePath(String rel) {
+        return opts.excludePathPatterns().stream().anyMatch(glob -> matchesPathPattern(rel, glob));
+    }
+
+    /** Pattern: `dir/**` matches anything under dir; `*.ext` matches filename extension. */
+    private static boolean matchesPathPattern(String rel, String pattern) {
+        if (pattern.endsWith("/**")) {
+            var prefix = pattern.substring(0, pattern.length() - 3);
+            return rel.equals(prefix) || rel.startsWith(prefix + "/");
+        }
+        if (pattern.startsWith("*.")) return rel.endsWith(pattern.substring(1));
+        return rel.equals(pattern);
+    }
+
+    /** Heuristic: NUL byte in first 8 KB → binary. */
+    private static boolean looksBinary(String content) {
+        int limit = Math.min(content.length(), 8192);
+        for (int i = 0; i < limit; i++) if (content.charAt(i) == '\0') return true;
+        return false;
     }
 
     private boolean matchesInclude(String rel) {
