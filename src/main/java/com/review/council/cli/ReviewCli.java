@@ -5,6 +5,7 @@ import com.review.council.config.CouncilConfigYamlLoader;
 import com.review.council.graph.CouncilOrchestrator;
 import com.review.council.graph.CouncilStateGraphRunner;
 import com.review.council.persistence.SessionRepository;
+import com.review.council.scanner.*;
 import com.review.council.state.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -183,10 +184,71 @@ public class ReviewCli implements Runnable {
     @Command(name = "scan",
              description = "Scan every source file in a git repo and review them all")
     public static class ScanCmd implements Callable<Integer> {
+        @Autowired CouncilConfigYamlLoader loader;
+        @Autowired FileChunker chunker;
+        @Autowired ScanOrchestrator scanOrch;
+        @Autowired SessionRepository sessions;
+
+        @Option(names = "--config", defaultValue = "./council.yaml")
+        String configPath;
+
+        @Option(names = "--path", defaultValue = ".",
+                description = "Git repo root to scan")
+        String path;
+
+        @Option(names = "--max-tokens", defaultValue = "50000",
+                description = "Max tokens per chunk")
+        int maxTokens;
+
+        @Option(names = "--concurrency", defaultValue = "3",
+                description = "Number of (chunk x reviewer) calls in flight")
+        int concurrency;
+
         @Override
-        public Integer call() {
-            System.out.println("scan: not yet implemented");
-            return 1;
+        public Integer call() throws Exception {
+            CouncilConfig config;
+            try (var in = new FileInputStream(configPath)) {
+                config = loader.load(in);
+            } catch (Exception e) {
+                System.err.println("✗ Failed to load config: " + e.getMessage());
+                return 1;
+            }
+
+            System.out.println("▶ Scanning " + new File(path).getAbsolutePath());
+            var opts = new ScanOptions(path, maxTokens, concurrency,
+                ScanOptions.defaults().includePatterns(),
+                ScanOptions.defaults().excludePatterns(),
+                ScanOptions.defaults().excludePathPatterns(),
+                ScanOptions.defaults().maxFileSizeBytes());
+            var scanner = new PathScanner(opts);
+
+            var entries = scanner.scan();
+            var chunks = chunker.chunk(entries);
+            System.out.println("  ✓ PathScanner: " + entries.size() + " files");
+            System.out.println("  ✓ FileChunker: " + chunks.size() + " chunks (<=" + maxTokens + " tok/chunk)");
+            System.out.println("  ✓ Reviewers: " + config.reviewers().size() +
+                " (" + config.reviewers().stream().map(com.review.council.config.ReviewerConfig::role)
+                    .reduce((x, y) -> x + ", " + y).orElse("") + ")");
+
+            String sessionId = "rev-scan-" + UUID.randomUUID().toString().substring(0, 8);
+            sessions.insert(sessionId, "scan-hash", configPath, "running", "n/a", "scan:" + path);
+
+            var result = scanOrch.run(sessionId, config, chunks, concurrency);
+            sessions.updateStatus(sessionId, "completed", "done");
+
+            var counts = result.findings().stream().collect(
+                java.util.stream.Collectors.groupingBy(Finding::severity,
+                    java.util.stream.Collectors.counting()));
+
+            System.out.println("\n═══════════════════════════════════════");
+            System.out.println("Scan " + sessionId + " completed in " + result.durationMs() / 1000 + "s");
+            System.out.println("  Total findings: " + result.findings().size()
+                + " (critical=" + counts.getOrDefault("critical", 0L)
+                + " major=" + counts.getOrDefault("major", 0L)
+                + " minor=" + counts.getOrDefault("minor", 0L) + ")");
+            System.out.println("  Cost: $" + String.format("%.4f", result.cost()));
+            System.out.println("═══════════════════════════════════════");
+            return 0;
         }
     }
 }
