@@ -22,16 +22,22 @@ public class DataSourceConfig {
         var dbFile = new File(dir, "review.db");
         var ds = new SQLiteDataSource();
         ds.setUrl("jdbc:sqlite:" + dbFile.getAbsolutePath());
-        // Apply V1 schema from classpath
-        try (var c = ds.getConnection(); var s = c.createStatement();
-             InputStream is = DataSourceConfig.class.getResourceAsStream("/db/migration/V1__init.sql")) {
-            if (is == null) throw new IllegalStateException("V1__init.sql not found on classpath");
+        // Apply all migrations from classpath in order (V1, V2, ...)
+        try (var c = ds.getConnection(); var s = c.createStatement()) {
+            applyMigration(s, "/db/migration/V1__init.sql");
+            applyMigration(s, "/db/migration/V2__scan_metadata.sql");
+        }
+        return ds;
+    }
+
+    private static void applyMigration(java.sql.Statement s, String classpathPath) throws Exception {
+        try (InputStream is = DataSourceConfig.class.getResourceAsStream(classpathPath)) {
+            if (is == null) throw new IllegalStateException(classpathPath + " not found on classpath");
             var sql = new String(is.readAllBytes(), StandardCharsets.UTF_8);
             for (var stmt : sql.split(";")) {
                 var trimmed = stmt.trim();
                 if (!trimmed.isEmpty()) s.execute(trimmed);
             }
         }
-        return ds;
     }
 }
