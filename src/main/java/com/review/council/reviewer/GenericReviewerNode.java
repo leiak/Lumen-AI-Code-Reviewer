@@ -47,7 +47,7 @@ public class GenericReviewerNode implements ReviewerNode {
                 String.format("{\"model\":\"%s\",\"tokens\":%d}", cfg.model(), promptTok + compTok));
 
             var raw = parser.parse(response);
-            return raw.stream().map(f -> new Finding(f.id(), role, f.severity(), f.line(), f.message(), f.suggestedFix())).toList();
+            return raw.stream().map(f -> Finding.of(role, f.severity(), f.line(), f.message(), f.suggestedFix())).toList();
         } catch (Exception e) {
             ctx.audit().record(ctx.sessionId(), "reviewer_" + role, "error", "{\"error\":\"" + e.getMessage() + "\"}");
             return List.of();

@@ -45,7 +45,7 @@ public class GenericReReviewerNode implements ReReviewerNode {
                 "{\"model\":\"" + cfg.model() + "\"}");
 
             var raw = parser.parse(response);
-            return raw.stream().map(f -> new Finding(f.id(), "re_review", f.severity(), f.line(), f.message(), f.suggestedFix())).toList();
+            return raw.stream().map(f -> Finding.of("re_review", f.severity(), f.line(), f.message(), f.suggestedFix())).toList();
         } catch (Exception e) {
             ctx.audit().record(ctx.sessionId(), "re_reviewer", "error", "{\"error\":\"" + e.getMessage() + "\"}");
             return List.of();
