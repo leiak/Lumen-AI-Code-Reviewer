@@ -24,7 +24,9 @@ import java.util.concurrent.Callable;
     mixinStandardHelpOptions = true,
     version = "review 1.0.0",
     description = "Lumen AI Code Reviewer",
-    subcommands = { ReviewCli.RunCmd.class, ReviewCli.ValidateCmd.class, ReviewCli.CostCmd.class, ReviewCli.GraphCmd.class }
+    subcommands = { ReviewCli.RunCmd.class, ReviewCli.ValidateCmd.class,
+                    ReviewCli.CostCmd.class, ReviewCli.GraphCmd.class,
+                    ReviewCli.ScanCmd.class }
 )
 public class ReviewCli implements Runnable {
     @Override public void run() {
@@ -174,6 +176,17 @@ public class ReviewCli implements Runnable {
             };
             System.out.println(graph.getGraph(type, config.name()).content());
             return 0;
+        }
+    }
+
+    @Component
+    @Command(name = "scan",
+             description = "Scan every source file in a git repo and review them all")
+    public static class ScanCmd implements Callable<Integer> {
+        @Override
+        public Integer call() {
+            System.out.println("scan: not yet implemented");
+            return 1;
         }
     }
 }
