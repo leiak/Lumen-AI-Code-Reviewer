@@ -33,6 +33,33 @@ export interface CostResponse {
   tokens: number;
 }
 
+export interface DemoFinding {
+  id: string;
+  severity: 'critical' | 'major' | 'minor';
+  reviewer: string;
+  file: string;
+  line: number;
+  message: string;
+  category: string;
+}
+
+export interface DemoPatch {
+  id: string;
+  file: string;
+  status: string;
+  description: string;
+}
+
+export interface DemoSession {
+  sessionId: string;
+  rounds: number;
+  findings: DemoFinding[];
+  appliedPatches: DemoPatch[];
+  cost: number;
+  demo: boolean;
+  note: string;
+}
+
 export async function validateYaml(yaml: string): Promise<ValidateResult> {
   const r = await fetch(`${BASE}/validate`, {
     method: 'POST',
@@ -69,5 +96,10 @@ export async function getSession(id: string): Promise<unknown> {
 
 export async function health(): Promise<{ status: string }> {
   const r = await fetch(`${BASE}/health`);
+  return r.json();
+}
+
+export async function getDemoSession(): Promise<DemoSession> {
+  const r = await fetch(`${BASE}/demo/start`);
   return r.json();
 }

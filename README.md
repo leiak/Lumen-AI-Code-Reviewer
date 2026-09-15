@@ -2,10 +2,95 @@
 
 多模型对弈式代码评审系统。三层架构：
 - **Spring AI 1.1** - 模型与工具接入
-- **LangGraph4j 1.6** - 编排定义（当前 MVP 用直接编排替代）
+- **LangGraph4j 1.6** - 编排定义（StateGraph + 并行 dispatch）
 - **SQLite (JamJet 替代)** - 持久化/审计/快照
 
-## 快速开始
+## 5 分钟走完一遍
+
+### Step 0：不用 API key 也能体验
+
+```bash
+# 1. 编译（首次约 30s）
+mvn -B package
+
+# 2. 启动后端（一个终端）
+java -jar target/review.jar serve --server.port=8090
+# → 看到 "Started CouncilApplication" 即就绪
+
+# 3. 启动前端（另一个终端）
+cd frontend
+npm install      # 首次
+npm run dev      # → http://localhost:5789
+# 第一次会弹防火墙 → 允许
+
+# 4. 浏览器打开
+#    http://localhost:5789
+#    Dashboard 有 4 步引导，绿色状态点 = 后端通了
+```
+
+### Step 1：看 StateGraph（无 API key）
+
+```
+http://localhost:5789/graph
+```
+- 看到真实编译出的 LangGraph4j StateGraph 拓扑
+- 节点：dispatch → aggregator → gate → [fixer|END] → re_reviewer → gate
+
+### Step 2：试 Demo Session（无 API key）
+
+```
+http://localhost:5789/sessions/rev-demo01
+```
+- 4 个 finding（critical: SQL 注入；major: N+1 / 硬编码密钥；minor: 资源泄漏）
+- 2 个 applied patch
+- 成本 $0.0423
+
+数据来自 `GET /api/demo/start` — 是 `demo-repo/UserService.java` 那 4 个故意 bug 的真实模拟结果。
+
+### Step 3：校验自己的 council.yaml（无 API key）
+
+```
+http://localhost:5789/validate
+```
+- 点 "⚡ Load sample" 加载示例
+- 或粘贴你自己的
+- 点 Validate，看是否通过 schema 检查
+
+### Step 4：跑真评审（需要 ANTHROPIC_API_KEY）
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...
+java -jar target/review.jar run --config=council.yaml
+```
+
+CLI 会输出：
+- 启动信息（council 名、reviewer 数、最大轮数）
+- 每轮：reviewer 数量 / finding 数 / severity 分布
+- 最终：rounds / findings / cost
+- 数据库：`.review-data/review.db` 可用任意 SQLite 客户端查看
+
+## CLI 一览
+
+```bash
+java -jar target/review.jar --help
+
+# 子命令
+run       # 跑评审（需 API key）
+validate  # 校验 council.yaml
+cost      # 看某个 session 的总成本
+graph     # 打印 StateGraph 拓扑（Mermaid / PlantUML）
+serve     # 启 Web 服务（默认 :8080，传 --server.port=8090）
+```
+
+## 三种形态的产物
+
+| 形态 | 命令 | 适合 |
+|---|---|---|
+| **CLI** | `review run` / `validate` / `cost` / `graph` | CI / 自动化 / 终端党 |
+| **REST API** | `review serve` → 7 个端点 | 集成 / 二次开发 |
+| **Web UI** | `frontend/npm run dev` | 手动评审 / 可视化探索 |
+
+## 快速开始（旧版，保留）
 
 ```bash
 # 编译

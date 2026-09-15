@@ -43,8 +43,8 @@ export default function Validate() {
         </button>
         <button
           onClick={() => setYaml(SAMPLE)}
-          className="px-4 py-2 bg-slate-100 rounded text-slate-700 hover:bg-slate-200">
-          Load sample
+          className="px-4 py-2 bg-slate-100 rounded text-slate-700 hover:bg-slate-200 border border-slate-300">
+          ⚡ Load sample
         </button>
       </div>
       {result && (

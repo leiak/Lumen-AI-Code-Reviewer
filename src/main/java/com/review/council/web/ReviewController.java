@@ -124,4 +124,52 @@ public class ReviewController {
     }
 
     public record StartRequest(String yaml, String diff, String gitRef) {}
+
+    /**
+     * Returns a fake completed review so the UI can show what a real result looks like
+     * without needing ANTHROPIC_API_KEY. Hardcoded sample based on the demo-repo's
+     * UserService.java bugs.
+     */
+    @GetMapping("/demo/start")
+    public Map<String, Object> demoStart() {
+        var f1 = Map.<String, Object>of(
+            "id", "f-001", "severity", "critical", "reviewer", "security",
+            "file", "src/main/java/com/demo/app/UserService.java", "line", 15,
+            "message", "SQL injection via string concatenation in findByName. " +
+                "Use PreparedStatement with bound parameters instead.",
+            "category", "security");
+        var f2 = Map.<String, Object>of(
+            "id", "f-002", "severity", "major", "reviewer", "perf",
+            "file", "src/main/java/com/demo/app/UserService.java", "line", 22,
+            "message", "N+1 query: getOrdersForUsers issues one SELECT per user. " +
+                "Batch with `WHERE user_id IN (?, ?, ...)` or JOIN.",
+            "category", "performance");
+        var f3 = Map.<String, Object>of(
+            "id", "f-003", "severity", "major", "reviewer", "security",
+            "file", "src/main/java/com/demo/app/UserService.java", "line", 50,
+            "message", "Hardcoded password 'admin123' in DB_PASSWORD constant. " +
+                "Move to environment variable or secret store.",
+            "category", "security");
+        var f4 = Map.<String, Object>of(
+            "id", "f-004", "severity", "minor", "reviewer", "architect",
+            "file", "src/main/java/com/demo/app/UserService.java", "line", 38,
+            "message", "Resource leak: findAll does not close Connection/Statement/ResultSet. " +
+                "Use try-with-resources.",
+            "category", "reliability");
+        var p1 = Map.<String, Object>of(
+            "id", "p-001", "file", "src/main/java/com/demo/app/UserService.java",
+            "status", "applied", "description", "Replace string concat with PreparedStatement in findByName");
+        var p2 = Map.<String, Object>of(
+            "id", "p-002", "file", "src/main/java/com/demo/app/UserService.java",
+            "status", "applied", "description", "Wrap findAll resources in try-with-resources");
+        return Map.of(
+            "sessionId", "rev-demo01",
+            "rounds", 2,
+            "findings", List.of(f1, f2, f3, f4),
+            "appliedPatches", List.of(p1, p2),
+            "cost", 0.0423,
+            "demo", true,
+            "note", "This is a static demo response. Real reviews require ANTHROPIC_API_KEY."
+        );
+    }
 }
