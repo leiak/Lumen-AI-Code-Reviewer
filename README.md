@@ -91,8 +91,27 @@ run       # 跑评审（需 API key）
 validate  # 校验 council.yaml
 cost      # 看某个 session 的总成本
 graph     # 打印 StateGraph 拓扑（Mermaid / PlantUML）
+scan      # 扫描整个 git repo（无需 diff；自动分块+并发）
 serve     # 启 Web 服务（默认 :8080，传 --server.port=8090）
 ```
+
+### 扫整个工程（新增）
+
+```bash
+# 扫描当前 git repo 下所有 *.java，自动按 50k token/chunk 分块、并发跑 reviewer
+java -jar target/lumen.jar scan --path=. --max-tokens=50000 --concurrency=3
+
+# 输出
+▶ Scanning D:\work-ai\0401-java-SpringAI-LangGraph4j-JamJet
+  ✓ PathScanner: 40 files
+  ✓ FileChunker: 4 chunks (≤50000 tok/chunk)
+  ✓ Reviewers: 3 (architect, security, perf)
+  ...
+  ✓ Total findings: 12 (critical=1 major=5 minor=6)
+  ✓ Cost: $0.0847, time=1m 23s
+```
+
+Web 端对应 `POST /api/sessions/scan`（前端"启动评审"页面的扫描工程 tab）。
 
 ## 三种形态的产物
 
@@ -151,6 +170,7 @@ curl -s "http://localhost:8090/sessions/rev-abc12345/graph?format=mermaid"
 | Demo repo（含 SQL 注入 / N+1 / 资源泄漏 / 硬编码密钥） | ✅ `demo-repo/` |
 | 前端 SPA（Vite + React + TS + Tailwind + Mermaid） | ✅ `frontend/` |
 | 多 provider：Anthropic / OpenAI / DeepSeek / MiniMax | ✅（按 key 自动启用） |
+| 扫整个工程（chunked batch） | ✅ `review scan` + `POST /api/sessions/scan` |
 
 ## 测试覆盖
 
