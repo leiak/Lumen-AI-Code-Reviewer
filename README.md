@@ -5,6 +5,17 @@
 - **LangGraph4j 1.6** - 编排定义（StateGraph + 并行 dispatch）
 - **SQLite (JamJet 替代)** - 持久化/审计/快照
 
+## 支持的模型 Provider
+
+| Provider | 模型前缀 / 命名 | API 协议 | 环境变量 |
+|---|---|---|---|
+| Anthropic | `claude-*` | 原生 | `ANTHROPIC_API_KEY` |
+| OpenAI | `gpt-*` / `o*` | 原生 | `OPENAI_API_KEY` |
+| DeepSeek | `deepseek-chat` / `deepseek-coder` / `deepseek-reasoner` | OpenAI 兼容 | `DEEPSEEK_API_KEY`（可选 `DEEPSEEK_BASE_URL` / `DEEPSEEK_MODEL`） |
+| MiniMax | `MiniMax-Text-01` / `abab*` | OpenAI 兼容 | `MINIMAX_API_KEY`（可选 `MINIMAX_BASE_URL` / `MINIMAX_MODEL`） |
+
+不配 key 的 provider 自动跳过（`@ConditionalOnExpression`），系统不会启动失败。模型名 → provider 的路由在 `ChatClientRegistry.resolve()`，加新 provider 只需在那里加一行前缀判断 + 在 `ChatClientConfig` 加一个 `@Bean`。
+
 ## 5 分钟走完一遍
 
 ### Step 0：不用 API key 也能体验
@@ -138,11 +149,12 @@ curl -s "http://localhost:8090/sessions/rev-abc12345/graph?format=mermaid"
 | LangGraph4j StateGraph 拓扑定义 + 并行 dispatch | ✅（CLI `graph` 显示 Mermaid/PlantUML） |
 | Demo repo（含 SQL 注入 / N+1 / 资源泄漏 / 硬编码密钥） | ✅ `demo-repo/` |
 | 前端 SPA（Vite + React + TS + Tailwind + Mermaid） | ✅ `frontend/` |
+| 多 provider：Anthropic / OpenAI / DeepSeek / MiniMax | ✅（按 key 自动启用） |
 
 ## 测试覆盖
 
 ```
-Tests run: 23, Failures: 0, Errors: 0, Skipped: 0
+Tests run: 31, Failures: 0, Errors: 0, Skipped: 0
 - ReviewState / Budget / immutable state transitions
 - CouncilConfig YAML 解析（含 human-gates / budget / path-rules）
 - PromptTemplate 占位符渲染
@@ -151,6 +163,7 @@ Tests run: 23, Failures: 0, Errors: 0, Skipped: 0
 - GateEvaluator per-reviewer + path-rule 优先级
 - PatchApplier 文件替换
 - SessionRepository / StateSnapshotRepository / AuditRepository / LlmCallRepository
+- ChatClientRegistry 路由（gpt/o/deepseek/MiniMax/abab/claude → 对应 provider）
 - StateGraphIntegrationTest 真实构建 LangGraph4j StateGraph 并验证 5 个节点（Spring context）
 ```
 

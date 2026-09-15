@@ -9,10 +9,10 @@ reviewers:
     model: claude-sonnet-5-20250929
     prompt-file: prompts/architect.md
   - role: security
-    model: claude-sonnet-5-20250929
+    model: deepseek-chat
     prompt-file: prompts/security.md
   - role: perf
-    model: claude-sonnet-5-20250929
+    model: MiniMax-Text-01
     prompt-file: prompts/perf.md
 human-gates:
   default: never

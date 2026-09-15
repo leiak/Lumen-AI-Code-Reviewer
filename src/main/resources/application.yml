@@ -20,6 +20,15 @@ server:
 
 review:
   data-dir: ${REVIEW_DATA_DIR:./.review-data}
+  providers:
+    deepseek:
+      api-key: ${DEEPSEEK_API_KEY:}
+      base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com/v1}
+      model: ${DEEPSEEK_MODEL:deepseek-chat}
+    minimax:
+      api-key: ${MINIMAX_API_KEY:}
+      base-url: ${MINIMAX_BASE_URL:https://api.minimax.chat/v1}
+      model: ${MINIMAX_MODEL:MiniMax-Text-01}
 
 spring.ai:
   anthropic:

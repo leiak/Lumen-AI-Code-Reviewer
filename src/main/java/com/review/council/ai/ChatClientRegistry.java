@@ -1,37 +1,50 @@
 package com.review.council.ai;
 
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Component;
-import java.util.Optional;
+import java.util.Map;
+import java.util.Set;
 
 @Component
 public class ChatClientRegistry {
-    private final ObjectProvider<ChatClient> provider;
+    private final Map<String, ChatClient> clients;
 
-    public ChatClientRegistry(ObjectProvider<ChatClient> provider) {
-        this.provider = provider;
+    public ChatClientRegistry(Map<String, ChatClient> clients) {
+        this.clients = clients;
     }
 
     public ChatClient get(String providerName) {
-        return switch (providerName) {
-            case "anthropic" -> findByName("anthropic").orElseThrow(() ->
-                new IllegalStateException("Anthropic ChatClient not configured. Set ANTHROPIC_API_KEY."));
-            case "openai" -> findByName("openai").orElseThrow(() ->
-                new IllegalStateException("OpenAI ChatClient not configured. Set OPENAI_API_KEY."));
-            default -> throw new IllegalArgumentException("Unknown provider: " + providerName);
-        };
+        var c = clients.get(providerName);
+        if (c != null) return c;
+        throw new IllegalStateException(switch (providerName) {
+            case "anthropic" -> "Anthropic ChatClient not configured. Set ANTHROPIC_API_KEY.";
+            case "openai"    -> "OpenAI ChatClient not configured. Set OPENAI_API_KEY.";
+            case "deepseek"  -> "DeepSeek ChatClient not configured. Set DEEPSEEK_API_KEY.";
+            case "minimax"   -> "MiniMax ChatClient not configured. Set MINIMAX_API_KEY.";
+            default -> "Unknown provider: " + providerName
+                + ". Configured: " + clients.keySet();
+        });
     }
 
-    /** Resolves "claude-*" → anthropic; "gpt-*" / "o*" → openai; defaults anthropic. */
+    /** Resolves a model name to its provider's ChatClient.
+     *  Routing:
+     *    gpt-*, o*                   → openai
+     *    deepseek-*, deepseek-chat   → deepseek
+     *    MiniMax-*, abab*            → minimax
+     *    claude-*                    → anthropic
+     *    default                     → anthropic
+     */
     public ChatClient resolve(String modelName) {
-        if (modelName.startsWith("gpt-") || modelName.startsWith("o")) return get("openai");
-        return get("anthropic");
+        if (modelName == null || modelName.isBlank()) return get("anthropic");
+        var lower = modelName.toLowerCase();
+        if (lower.startsWith("gpt-") || lower.startsWith("o")) return get("openai");
+        if (lower.startsWith("deepseek")) return get("deepseek");
+        if (modelName.startsWith("MiniMax") || lower.startsWith("abab")) return get("minimax");
+        if (lower.startsWith("claude-")) return get("anthropic");
+        return get("anthropic"); // sensible default
     }
 
-    private Optional<ChatClient> findByName(String name) {
-        return provider.stream()
-            .filter(c -> c.getClass().getSimpleName().toLowerCase().contains(name))
-            .findFirst();
+    public Set<String> configuredProviders() {
+        return clients.keySet();
     }
 }
