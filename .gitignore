@@ -29,6 +29,11 @@ logs/
 *.local
 application-local.yml
 
+# Secrets — .env.example is committed, real .env is not
+.env
+.env.*
+!.env.example
+
 # Maven
 target/
 *.class

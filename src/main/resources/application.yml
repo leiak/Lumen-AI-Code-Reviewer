@@ -1,6 +1,10 @@
 spring:
   application:
     name: review-council
+  config:
+    # 加载项目根的 .env（不存在不报错）。Spring Boot 3.0+ 原生支持。
+    # .env 已 .gitignore；.env.example 是模板。
+    import: "optional:file:.env[.properties]"
   autoconfigure:
     exclude:
       - org.springframework.ai.model.openai.autoconfigure.OpenAiChatAutoConfiguration
