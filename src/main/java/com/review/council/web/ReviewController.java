@@ -34,6 +34,9 @@ public class ReviewController {
     @Autowired CouncilConfigYamlLoader loader;
     @Autowired SessionRepository sessions;
     @Autowired LlmCallRepository llmCalls;
+    @Autowired com.review.council.scanner.PathScanner pathScanner;
+    @Autowired com.review.council.scanner.FileChunker fileChunker;
+    @Autowired com.review.council.scanner.ScanOrchestrator scanOrch;
 
     @GetMapping("/health")
     public Map<String, Object> health() {
@@ -139,6 +142,46 @@ public class ReviewController {
     }
 
     public record StartRequest(String yaml, String diff, String gitRef) {}
+
+    public record ScanRequest(String yaml, String path, Integer maxTokens, Integer concurrency) {}
+
+    @PostMapping("/sessions/scan")
+    public Map<String, Object> scan(@RequestBody ScanRequest req) throws Exception {
+        CouncilConfig config;
+        try (var in = new ByteArrayInputStream(req.yaml().getBytes())) {
+            config = loader.load(in);
+        } catch (Exception e) {
+            return Map.of("error", "invalid config: " + e.getMessage());
+        }
+        var opts = new com.review.council.scanner.ScanOptions(
+            req.path() != null ? req.path() : ".",
+            req.maxTokens() != null ? req.maxTokens() : 50_000,
+            req.concurrency() != null ? req.concurrency() : 3,
+            com.review.council.scanner.ScanOptions.defaults().includePatterns(),
+            com.review.council.scanner.ScanOptions.defaults().excludePatterns(),
+            com.review.council.scanner.ScanOptions.defaults().excludePathPatterns(),
+            com.review.council.scanner.ScanOptions.defaults().maxFileSizeBytes()
+        );
+        var scanner = new com.review.council.scanner.PathScanner(opts);
+        var entries = scanner.scan();
+        var chunks = fileChunker.chunk(entries);
+
+        String sessionId = "rev-scan-" + UUID.randomUUID().toString().substring(0, 8);
+        sessions.insert(sessionId, "scan-hash", "yaml", "running", "n/a", "scan:" + opts.path());
+
+        var result = scanOrch.run(sessionId, config, chunks, opts.concurrency());
+        sessions.updateStatus(sessionId, "completed", "done");
+
+        return Map.of(
+            "sessionId", sessionId,
+            "totalFiles", result.totalFiles(),
+            "totalChunks", result.totalChunks(),
+            "reviewers", result.reviewers(),
+            "findings", result.findings(),
+            "cost", result.cost(),
+            "durationMs", result.durationMs()
+        );
+    }
 
     /**
      * Returns a fake completed review so the UI can show what a real result looks like
