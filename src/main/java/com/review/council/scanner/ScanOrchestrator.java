@@ -43,35 +43,51 @@ public class ScanOrchestrator {
                 config.budget().maxCostUsd()),
             Map.of());
 
-        List<Finding> all = new ArrayList<>();
-        for (var chunk : chunks) {
-            for (var rc : config.reviewers()) {
-                if (!rc.enabled()) continue;
-                try {
-                    var diff = new CodeDiff(chunk.chunkId(), "HEAD",
-                        chunk.entries().stream()
-                            .map(e -> new CodeDiff.FileDiff(e.path(), "", e.content(), List.of()))
-                            .toList());
-                    var state = new ReviewState(sessionId, diff, Language.JAVA, config,
-                        List.of(), List.of(), List.of(), 0, ctx.budget(), FlowSignal.CONTINUE);
-                    var findings = reviewer.apply(new NodeInputs.ReviewerInput(state, rc), ctx);
-                    for (var f : findings) {
-                        all.add(new Finding(f.id(), f.reviewerRole(), f.severity(), f.line(),
-                            f.message(), f.suggestedFix(), chunk.chunkId(), f.filePath()));
-                    }
-                } catch (Exception e) {
-                    audit.record(sessionId, "scanner", "reviewer_error",
-                        "{\"chunk\":\"" + chunk.chunkId() + "\",\"reviewer\":\"" + rc.role()
-                            + "\",\"error\":\"" + e.getMessage() + "\"}");
+        var pool = java.util.concurrent.Executors.newFixedThreadPool(concurrency);
+        var futures = new java.util.ArrayList<
+            java.util.concurrent.CompletableFuture<List<Finding>>>();
+
+        try {
+            for (var chunk : chunks) {
+                for (var rc : config.reviewers()) {
+                    if (!rc.enabled()) continue;
+                    futures.add(java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+                        try {
+                            var diff = new CodeDiff(chunk.chunkId(), "HEAD",
+                                chunk.entries().stream()
+                                    .map(e -> new CodeDiff.FileDiff(e.path(), "", e.content(), List.of()))
+                                    .toList());
+                            var state = new ReviewState(sessionId, diff, Language.JAVA, config,
+                                List.of(), List.of(), List.of(), 0, ctx.budget(), FlowSignal.CONTINUE);
+                            var findings = reviewer.apply(
+                                new NodeInputs.ReviewerInput(state, rc), ctx);
+                            return findings.stream()
+                                .map(f -> new Finding(f.id(), f.reviewerRole(), f.severity(),
+                                    f.line(), f.message(), f.suggestedFix(),
+                                    chunk.chunkId(), f.filePath()))
+                                .toList();
+                        } catch (Exception e) {
+                            audit.record(sessionId, "scanner", "reviewer_error",
+                                "{\"chunk\":\"" + chunk.chunkId() + "\",\"reviewer\":\""
+                                    + rc.role() + "\",\"error\":\"" + e.getMessage() + "\"}");
+                            return List.<Finding>of();
+                        }
+                    }, pool));
                 }
             }
-        }
 
-        long durationMs = System.currentTimeMillis() - start;
-        double cost = llmCalls.totalCostFor(sessionId);
-        var reviewers = config.reviewers().stream().map(ReviewerConfig::role).toList();
-        return new ScanResult(sessionId,
-            chunks.stream().mapToInt(c -> c.entries().size()).sum(),
-            chunks.size(), reviewers, all, cost, durationMs);
+            List<Finding> all = futures.stream()
+                .flatMap(f -> f.join().stream())
+                .toList();
+
+            long durationMs = System.currentTimeMillis() - start;
+            double cost = llmCalls.totalCostFor(sessionId);
+            var reviewers = config.reviewers().stream().map(ReviewerConfig::role).toList();
+            return new ScanResult(sessionId,
+                chunks.stream().mapToInt(c -> c.entries().size()).sum(),
+                chunks.size(), reviewers, all, cost, durationMs);
+        } finally {
+            pool.shutdown();
+        }
     }
 }

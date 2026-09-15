@@ -10,6 +10,8 @@ import org.mockito.Mockito;
 import java.util.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class ScanOrchestratorTest {
@@ -44,5 +46,32 @@ class ScanOrchestratorTest {
         // 2 chunks x 2 reviewers = 4 LLM calls -> 4 findings
         assertThat(result.findings()).hasSize(4);
         Mockito.verify(reviewerNode, Mockito.times(4)).apply(any(), any());
+    }
+
+    @Test
+    void uses_executor_with_configured_concurrency() throws Exception {
+        var chunks = List.of(
+            new FileChunk("chunk-001", List.of(new FileEntry("A.java", "x", 1)), 1),
+            new FileChunk("chunk-002", List.of(new FileEntry("B.java", "y", 1)), 1),
+            new FileChunk("chunk-003", List.of(new FileEntry("C.java", "z", 1)), 1)
+        );
+
+        var reviewerNode = Mockito.mock(GenericReviewerNode.class);
+        when(reviewerNode.apply(any(), any())).thenReturn(List.of());
+
+        var config = new CouncilConfig("test", "1", 1, "no-critical-and-no-major",
+            List.of(ReviewerConfig.defaults("architect")),
+            AggregatorConfig.defaults(), HumanGateConfig.defaults(),
+            FixerConfig.defaults(), ReReviewerConfig.defaults(),
+            new BudgetConfig(100_000, 60, new java.math.BigDecimal("1.00"), "abort"),
+            OutputConfig.defaults());
+
+        var orch = new ScanOrchestrator(reviewerNode, Mockito.mock(AuditRepository.class),
+            Mockito.mock(LlmCallRepository.class), 3);
+        var result = orch.run("rev-test2", config, chunks);
+
+        assertThat(result.totalChunks()).isEqualTo(3);
+        // 3 chunks x 1 reviewer = 3 calls
+        verify(reviewerNode, times(3)).apply(any(), any());
     }
 }
