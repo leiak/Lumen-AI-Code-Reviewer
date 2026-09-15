@@ -27,11 +27,12 @@ review:
   providers:
     deepseek:
       api-key: ${DEEPSEEK_API_KEY:}
-      base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com/v1}
+      # Spring AI 在 baseUrl 后面拼 /v1/chat/completions，**不能带 /v1** 否则 404
+      base-url: ${DEEPSEEK_BASE_URL:https://api.deepseek.com}
       model: ${DEEPSEEK_MODEL:deepseek-chat}
     minimax:
       api-key: ${MINIMAX_API_KEY:}
-      base-url: ${MINIMAX_BASE_URL:https://api.minimax.chat/v1}
+      base-url: ${MINIMAX_BASE_URL:https://api.minimax.chat}
       model: ${MINIMAX_MODEL:MiniMax-Text-01}
 
 spring.ai:

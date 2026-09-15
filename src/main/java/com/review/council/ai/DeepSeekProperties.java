@@ -7,7 +7,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public record DeepSeekProperties(String apiKey, String baseUrl, String model) {
     public DeepSeekProperties {
         if (apiKey == null) apiKey = "";
-        if (baseUrl == null || baseUrl.isBlank()) baseUrl = "https://api.deepseek.com/v1";
+        // Spring AI's OpenAiApi 在 baseUrl 后面拼 /v1/chat/completions，
+        // 所以这里只写到 host，**不能带 /v1**，否则会变成 /v1/v1/... → 404
+        if (baseUrl == null || baseUrl.isBlank()) baseUrl = "https://api.deepseek.com";
         if (model == null || model.isBlank()) model = "deepseek-chat";
     }
     public boolean isEnabled() { return !apiKey.isBlank(); }

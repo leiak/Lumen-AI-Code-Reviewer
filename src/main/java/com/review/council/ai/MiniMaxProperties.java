@@ -7,7 +7,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public record MiniMaxProperties(String apiKey, String baseUrl, String model) {
     public MiniMaxProperties {
         if (apiKey == null) apiKey = "";
-        if (baseUrl == null || baseUrl.isBlank()) baseUrl = "https://api.minimax.chat/v1";
+        // Spring AI's OpenAiApi 在 baseUrl 后面拼 /v1/chat/completions，
+        // 所以这里只写到 host，**不能带 /v1**，否则会变成 /v1/v1/... → 404
+        if (baseUrl == null || baseUrl.isBlank()) baseUrl = "https://api.minimax.chat";
         if (model == null || model.isBlank()) model = "MiniMax-Text-01";
     }
     public boolean isEnabled() { return !apiKey.isBlank(); }
