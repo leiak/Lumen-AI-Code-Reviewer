@@ -167,3 +167,31 @@ export async function getDemoSession(): Promise<DemoSession> {
   const r = await fetch(`${BASE}/demo/start`);
   return r.json();
 }
+
+/* ---------- Whole-project scan (v1.2) ---------- */
+
+export interface ScanOptions {
+  path?: string;
+  maxTokens?: number;
+  concurrency?: number;
+}
+
+export interface ScanResponse {
+  sessionId: string;
+  totalFiles: number;
+  totalChunks: number;
+  reviewers: string[];
+  findings: Finding[];
+  cost: number;
+  durationMs: number;
+}
+
+export async function scanSession(yaml: string, opts: ScanOptions = {}): Promise<ScanResponse> {
+  const r = await fetch(`${BASE}/sessions/scan`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ yaml, ...opts }),
+  });
+  if (!r.ok) throw new Error(`scan HTTP ${r.status}: ${await r.text()}`);
+  return r.json();
+}
