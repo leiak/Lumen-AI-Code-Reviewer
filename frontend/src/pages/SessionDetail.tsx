@@ -8,6 +8,12 @@ const SEVERITY_CLASS: Record<string, string> = {
   minor: 'bg-emerald-100 text-emerald-800 border-emerald-300',
 };
 
+const SEVERITY_CN: Record<string, string> = {
+  critical: '严重',
+  major: '重要',
+  minor: '次要',
+};
+
 const SEVERITY_ORDER: Record<string, number> = { critical: 0, major: 1, minor: 2 };
 
 export default function SessionDetail() {
@@ -34,7 +40,7 @@ export default function SessionDetail() {
       <div className="space-y-4">
         <h2 className="text-xl font-semibold text-slate-800 font-mono">{id}</h2>
         <div className="p-3 rounded border border-critical bg-red-50 text-sm text-red-800">{error}</div>
-        <Link to="/" className="text-council-500 underline">← Back</Link>
+        <Link to="/" className="text-council-500 underline">← 返回</Link>
       </div>
     );
   }
@@ -44,22 +50,22 @@ export default function SessionDetail() {
       <div className="flex items-baseline gap-3">
         <h2 className="text-xl font-semibold text-slate-800 font-mono">{id}</h2>
         {isDemo && (
-          <span className="px-2 py-0.5 bg-amber-100 text-amber-800 text-xs font-medium rounded">DEMO</span>
+          <span className="px-2 py-0.5 bg-amber-100 text-amber-800 text-xs font-medium rounded">演示</span>
         )}
-        <Link to="/" className="ml-auto text-council-500 text-sm">← Dashboard</Link>
+        <Link to="/" className="ml-auto text-council-500 text-sm">← 返回仪表盘</Link>
       </div>
 
       {isDemo && (
         <div className="bg-amber-50 border border-amber-200 rounded p-3 text-sm text-amber-900">
-          This is a static demo response. Real reviews need <code>ANTHROPIC_API_KEY</code> and
-          <code className="ml-1 px-1 bg-amber-100 rounded">java -jar review.jar run</code>.
+          这是静态演示数据。真实评审需要 <code>ANTHROPIC_API_KEY</code>，并执行
+          <code className="ml-1 px-1 bg-amber-100 rounded">java -jar review.jar run</code>。
         </div>
       )}
 
       {cost && (
         <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200 grid grid-cols-3 gap-4">
           <div>
-            <div className="text-xs text-slate-500 uppercase">Cost</div>
+            <div className="text-xs text-slate-500 uppercase">成本</div>
             <div className="text-2xl font-bold text-slate-800">${cost.costUsd.toFixed(4)}</div>
           </div>
           <div>
@@ -67,7 +73,7 @@ export default function SessionDetail() {
             <div className="text-2xl font-bold text-slate-800">{cost.tokens.toLocaleString()}</div>
           </div>
           <div>
-            <div className="text-xs text-slate-500 uppercase">Rounds</div>
+            <div className="text-xs text-slate-500 uppercase">轮数</div>
             <div className="text-2xl font-bold text-slate-800">
               {(demo?.rounds ?? (session as { rounds?: number })?.rounds ?? '—')}
             </div>
@@ -79,7 +85,7 @@ export default function SessionDetail() {
         <>
           <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
             <h3 className="font-semibold text-slate-800 mb-3">
-              Findings ({demo.findings.length})
+              问题清单（{demo.findings.length}）
             </h3>
             <div className="space-y-2">
               {demo.findings
@@ -88,7 +94,7 @@ export default function SessionDetail() {
                 .map(f => (
                   <div key={f.id} className={`p-3 rounded border ${SEVERITY_CLASS[f.severity] ?? ''}`}>
                     <div className="flex items-baseline gap-2">
-                      <span className="text-xs font-bold uppercase">{f.severity}</span>
+                      <span className="text-xs font-bold uppercase">{SEVERITY_CN[f.severity] ?? f.severity}</span>
                       <span className="text-xs text-slate-600">· {f.reviewer}</span>
                       <span className="text-xs text-slate-600">· {f.file}:{f.line}</span>
                     </div>
@@ -100,13 +106,13 @@ export default function SessionDetail() {
 
           <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
             <h3 className="font-semibold text-slate-800 mb-3">
-              Applied patches ({demo.appliedPatches.length})
+              已应用补丁（{demo.appliedPatches.length}）
             </h3>
             <div className="space-y-2">
               {demo.appliedPatches.map(p => (
                 <div key={p.id} className="p-3 bg-green-50 border border-green-200 rounded">
                   <div className="flex items-baseline gap-2">
-                    <span className="text-xs font-bold text-green-800 uppercase">{p.status}</span>
+                    <span className="text-xs font-bold text-green-800 uppercase">{p.status === 'applied' ? '已应用' : p.status}</span>
                     <span className="text-xs text-slate-600">· {p.file}</span>
                   </div>
                   <div className="mt-1 text-sm text-slate-800">{p.description}</div>
@@ -119,7 +125,7 @@ export default function SessionDetail() {
 
       {isDemo ? null : session ? (
         <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
-          <h3 className="font-semibold text-slate-800 mb-2">Session details</h3>
+          <h3 className="font-semibold text-slate-800 mb-2">Session 详细信息</h3>
           <pre className="text-xs bg-slate-50 p-3 rounded overflow-auto">
             {String(JSON.stringify(session, null, 2))}
           </pre>

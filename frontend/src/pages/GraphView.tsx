@@ -24,10 +24,9 @@ export default function GraphView() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-semibold text-slate-800">State Graph (LangGraph4j)</h2>
+      <h2 className="text-xl font-semibold text-slate-800">状态图（LangGraph4j）</h2>
       <p className="text-sm text-slate-500">
-        The actual topology compiled by the backend. dispatch fans out to all
-        reviewers in parallel; conditional edges route by signal.
+        后端编译出的真实拓扑。dispatch 节点并行扇出到所有 reviewer；条件边根据 signal 路由。
       </p>
       {error && <div className="p-3 rounded border border-critical bg-red-50 text-sm text-red-800">{error}</div>}
       <div className="bg-white rounded-lg p-6 shadow-sm border border-slate-200 overflow-auto">

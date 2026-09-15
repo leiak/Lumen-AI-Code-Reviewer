@@ -29,7 +29,7 @@ export default function Validate() {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-semibold text-slate-800">Validate council.yaml</h2>
+      <h2 className="text-xl font-semibold text-slate-800">校验 council.yaml</h2>
       <textarea
         className="w-full h-80 px-3 py-2 border border-slate-300 rounded font-mono text-sm"
         value={yaml}
@@ -39,28 +39,28 @@ export default function Validate() {
         <button
           onClick={run} disabled={loading}
           className="px-4 py-2 bg-council-500 text-white rounded font-medium hover:bg-council-700 disabled:bg-slate-300">
-          {loading ? 'Validating...' : 'Validate'}
+          {loading ? '校验中…' : '校验'}
         </button>
         <button
           onClick={() => setYaml(SAMPLE)}
           className="px-4 py-2 bg-slate-100 rounded text-slate-700 hover:bg-slate-200 border border-slate-300">
-          ⚡ Load sample
+          ⚡ 加载示例
         </button>
       </div>
       {result && (
         <div className={`p-4 rounded border ${result.valid ? 'border-minor bg-green-50' : 'border-critical bg-red-50'}`}>
           {result.valid ? (
             <div>
-              <div className="font-semibold text-green-800">✓ Valid configuration</div>
+              <div className="font-semibold text-green-800">✓ 配置合法</div>
               <dl className="mt-2 text-sm text-green-900 grid grid-cols-3 gap-1">
-                <dt className="text-slate-600">Council:</dt><dd className="col-span-2 font-mono">{result.name}</dd>
-                <dt className="text-slate-600">Reviewers:</dt><dd className="col-span-2">{result.reviewers}</dd>
-                <dt className="text-slate-600">Max rounds:</dt><dd className="col-span-2">{result.maxRounds}</dd>
+                <dt className="text-slate-600">Council：</dt><dd className="col-span-2 font-mono">{result.name}</dd>
+                <dt className="text-slate-600">Reviewer 数：</dt><dd className="col-span-2">{result.reviewers}</dd>
+                <dt className="text-slate-600">最大轮数：</dt><dd className="col-span-2">{result.maxRounds}</dd>
               </dl>
             </div>
           ) : (
             <div>
-              <div className="font-semibold text-red-800">✗ Invalid</div>
+              <div className="font-semibold text-red-800">✗ 配置不合法</div>
               <pre className="mt-2 text-xs text-red-900 whitespace-pre-wrap font-mono">{result.error}</pre>
             </div>
           )}

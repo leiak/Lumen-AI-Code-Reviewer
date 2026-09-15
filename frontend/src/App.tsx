@@ -13,11 +13,11 @@ export default function App() {
     <div className="min-h-screen flex flex-col">
       <header className="bg-white border-b border-slate-200">
         <div className="max-w-6xl mx-auto px-6 py-3 flex items-center gap-4">
-          <h1 className="text-lg font-bold text-council-700">AI Code Review Council</h1>
+          <h1 className="text-lg font-bold text-council-700">AI 代码评审委员会</h1>
           <nav className="flex gap-1 ml-auto">
-            <NavLink to="/" className={active} end>Dashboard</NavLink>
-            <NavLink to="/validate" className={active}>Validate</NavLink>
-            <NavLink to="/graph" className={active}>Graph</NavLink>
+            <NavLink to="/" className={active} end>仪表盘</NavLink>
+            <NavLink to="/validate" className={active}>校验配置</NavLink>
+            <NavLink to="/graph" className={active}>状态图</NavLink>
           </nav>
         </div>
       </header>
