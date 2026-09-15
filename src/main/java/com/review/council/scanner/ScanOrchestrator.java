@@ -31,11 +31,16 @@ public class ScanOrchestrator {
     }
 
     public ScanResult run(String sessionId, CouncilConfig config, List<FileChunk> chunks) {
-        return run(sessionId, config, chunks, defaultConcurrency);
+        return run(sessionId, config, chunks, ".", defaultConcurrency);
     }
 
     public ScanResult run(String sessionId, CouncilConfig config, List<FileChunk> chunks,
                           int concurrency) {
+        return run(sessionId, config, chunks, ".", concurrency);
+    }
+
+    public ScanResult run(String sessionId, CouncilConfig config, List<FileChunk> chunks,
+                          String scanRoot, int concurrency) {
         long start = System.currentTimeMillis();
         var ctx = new NodeContext(sessionId, audit, llmCalls, null,
             Budget.empty(config.budget().maxTokens(),
@@ -83,9 +88,49 @@ public class ScanOrchestrator {
             long durationMs = System.currentTimeMillis() - start;
             double cost = llmCalls.totalCostFor(sessionId);
             var reviewers = config.reviewers().stream().map(ReviewerConfig::role).toList();
+
+            // Per-reviewer aggregation
+            Map<String, ScanResult.PerReviewerSummary> perReviewer = new LinkedHashMap<>();
+            var llmByNode = llmCalls.totalsByNode(sessionId);
+            for (var role : reviewers) {
+                String nodeName = "reviewer_" + role;
+                var totals = llmByNode.getOrDefault(nodeName, new LlmCallRepository.NodeTotals(0, 0, 0.0, 0));
+                // Severity counts from findings (scan's findings all belong to this reviewer)
+                Map<String, Long> sevCounts = new LinkedHashMap<>();
+                sevCounts.put("critical", 0L);
+                sevCounts.put("major", 0L);
+                sevCounts.put("minor", 0L);
+                for (var f : all) {
+                    if (role.equals(f.reviewerRole())) {
+                        sevCounts.merge(f.severity(), 1L, Long::sum);
+                    }
+                }
+                perReviewer.put(role, new ScanResult.PerReviewerSummary(
+                    (int) sevCounts.values().stream().mapToLong(Long::longValue).sum(),
+                    totals.promptTokens(),
+                    totals.completionTokens(),
+                    totals.costUsd(),
+                    sevCounts));
+            }
+
+            // Flatten all scanned file paths (deduped, sorted)
+            var files = chunks.stream()
+                    .flatMap(c -> c.entries().stream())
+                    .map(FileEntry::path)
+                    .distinct()
+                    .sorted()
+                    .toList();
+
             return new ScanResult(sessionId,
+                scanRoot,
                 chunks.stream().mapToInt(c -> c.entries().size()).sum(),
-                chunks.size(), reviewers, all, cost, durationMs);
+                chunks.size(),
+                reviewers,
+                files,
+                perReviewer,
+                all,
+                cost,
+                durationMs);
         } finally {
             pool.shutdown();
         }

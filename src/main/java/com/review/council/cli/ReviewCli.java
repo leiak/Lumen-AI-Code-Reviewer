@@ -233,7 +233,7 @@ public class ReviewCli implements Runnable {
             String sessionId = "rev-scan-" + UUID.randomUUID().toString().substring(0, 8);
             sessions.insert(sessionId, "scan-hash", configPath, "running", "n/a", "scan:" + path);
 
-            var result = scanOrch.run(sessionId, config, chunks, concurrency);
+            var result = scanOrch.run(sessionId, config, chunks, path, concurrency);
             sessions.updateStatus(sessionId, "completed", "done");
 
             var counts = result.findings().stream().collect(
@@ -242,11 +242,17 @@ public class ReviewCli implements Runnable {
 
             System.out.println("\n═══════════════════════════════════════");
             System.out.println("Scan " + sessionId + " completed in " + result.durationMs() / 1000 + "s");
+            System.out.println("  Files: " + result.totalFiles() + " / chunks: " + result.totalChunks());
             System.out.println("  Total findings: " + result.findings().size()
                 + " (critical=" + counts.getOrDefault("critical", 0L)
                 + " major=" + counts.getOrDefault("major", 0L)
                 + " minor=" + counts.getOrDefault("minor", 0L) + ")");
             System.out.println("  Cost: $" + String.format("%.4f", result.cost()));
+            System.out.println("  Per-reviewer:");
+            result.perReviewer().forEach((role, sum) -> {
+                System.out.printf("    - %s: %d findings, in=%d out=%d, $%.4f%n",
+                    role, sum.findingsCount(), sum.tokensIn(), sum.tokensOut(), sum.costUsd());
+            });
             System.out.println("═══════════════════════════════════════");
             return 0;
         }

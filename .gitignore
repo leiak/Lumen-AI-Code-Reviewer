@@ -46,3 +46,9 @@ frontend/dist/
 frontend/node_modules/
 frontend/.vite/
 frontend/tsconfig.tsbuildinfo
+
+# Local session scripts (build helpers, test runners)
+build-*.cmd
+test-*.cmd
+build-*.sh
+test-*.sh

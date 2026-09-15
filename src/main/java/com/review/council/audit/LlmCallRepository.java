@@ -2,6 +2,7 @@ package com.review.council.audit;
 
 import javax.sql.DataSource;
 import java.sql.*;
+import java.util.*;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -40,4 +41,29 @@ public class LlmCallRepository {
             try (var rs = ps.executeQuery()) { return rs.next() ? rs.getLong(1) : 0; }
         } catch (SQLException e) { throw new RuntimeException(e); }
     }
+
+    /** Returns totals grouped by node_name, e.g. {"reviewer_security": NodeTotals(...), ...}. */
+    public Map<String, NodeTotals> totalsByNode(String sessionId) {
+        var sql = "SELECT node_name, " +
+            "COALESCE(SUM(prompt_tokens),0) AS pt, " +
+            "COALESCE(SUM(completion_tokens),0) AS ct, " +
+            "COALESCE(SUM(cost_usd),0) AS cost, " +
+            "COUNT(*) AS calls " +
+            "FROM llm_calls WHERE session_id = ? AND success = 1 " +
+            "GROUP BY node_name";
+        Map<String, NodeTotals> out = new LinkedHashMap<>();
+        try (var c = ds.getConnection(); var ps = c.prepareStatement(sql)) {
+            ps.setString(1, sessionId);
+            try (var rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    out.put(rs.getString("node_name"), new NodeTotals(
+                        rs.getLong("pt"), rs.getLong("ct"),
+                        rs.getDouble("cost"), rs.getInt("calls")));
+                }
+            }
+        } catch (SQLException e) { throw new RuntimeException(e); }
+        return out;
+    }
+
+    public record NodeTotals(long promptTokens, long completionTokens, double costUsd, int calls) {}
 }

@@ -169,14 +169,17 @@ public class ReviewController {
         String sessionId = "rev-scan-" + UUID.randomUUID().toString().substring(0, 8);
         sessions.insert(sessionId, "scan-hash", "yaml", "running", "n/a", "scan:" + opts.path());
 
-        var result = scanOrch.run(sessionId, config, chunks, opts.concurrency());
+        var result = scanOrch.run(sessionId, config, chunks, opts.path(), opts.concurrency());
         sessions.updateStatus(sessionId, "completed", "done");
 
         return Map.of(
             "sessionId", sessionId,
+            "scanRoot", result.scanRoot(),
             "totalFiles", result.totalFiles(),
             "totalChunks", result.totalChunks(),
             "reviewers", result.reviewers(),
+            "files", result.files(),
+            "perReviewer", result.perReviewer(),
             "findings", result.findings(),
             "cost", result.cost(),
             "durationMs", result.durationMs()
