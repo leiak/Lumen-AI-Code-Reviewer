@@ -2,6 +2,7 @@ package com.review.council.ai;
 
 import org.springframework.ai.anthropic.AnthropicChatModel;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.ollama.OllamaChatModel;
 import org.springframework.ai.openai.OpenAiChatModel;
 import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.ai.openai.api.OpenAiApi;
@@ -22,6 +23,12 @@ public class ChatClientConfig {
     @Bean("openai")
     @ConditionalOnBean(OpenAiChatModel.class)
     public ChatClient openai(OpenAiChatModel model) {
+        return ChatClient.create(model);
+    }
+
+    @Bean("ollama")
+    @ConditionalOnBean(OllamaChatModel.class)
+    public ChatClient ollama(OllamaChatModel model) {
         return ChatClient.create(model);
     }
 

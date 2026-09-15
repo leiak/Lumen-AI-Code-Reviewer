@@ -45,7 +45,7 @@ export default function SessionDetail() {
       {isDemo && (
         <div className="bg-amber-50 border border-amber-200 rounded p-3 text-sm text-amber-900">
           这是静态演示数据。真实评审需要 <code>ANTHROPIC_API_KEY</code>，并执行
-          <code className="ml-1 px-1 bg-amber-100 rounded">java -jar review.jar run</code>。
+          <code className="ml-1 px-1 bg-amber-100 rounded">java -jar target\lumen.jar run</code>。
         </div>
       )}
 

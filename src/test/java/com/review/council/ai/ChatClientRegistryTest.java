@@ -10,6 +10,7 @@ class ChatClientRegistryTest {
 
     private final ChatClient anthropic = mock(ChatClient.class);
     private final ChatClient openai    = mock(ChatClient.class);
+    private final ChatClient ollama    = mock(ChatClient.class);
     private final ChatClient deepseek  = mock(ChatClient.class);
     private final ChatClient minimax   = mock(ChatClient.class);
 
@@ -30,6 +31,18 @@ class ChatClientRegistryTest {
         var r = registry(Map.of("openai", openai, "anthropic", anthropic));
         assertThat(r.resolve("claude-sonnet-5-20250929")).isSameAs(anthropic);
         assertThat(r.resolve("claude-opus-5")).isSameAs(anthropic);
+    }
+
+    @Test
+    void resolve_ollamaPrefixesRouteToOllama() {
+        var r = registry(Map.of("anthropic", anthropic, "ollama", ollama));
+        assertThat(r.resolve("qwen2.5-coder:32b")).isSameAs(ollama);
+        assertThat(r.resolve("qwen2.5-coder:7b")).isSameAs(ollama);
+        assertThat(r.resolve("llama3.1:70b")).isSameAs(ollama);
+        assertThat(r.resolve("codellama:13b")).isSameAs(ollama);
+        assertThat(r.resolve("mistral:7b")).isSameAs(ollama);
+        assertThat(r.resolve("gemma2:27b")).isSameAs(ollama);
+        assertThat(r.resolve("phi3:medium")).isSameAs(ollama);
     }
 
     @Test
@@ -64,6 +77,9 @@ class ChatClientRegistryTest {
         assertThatThrownBy(() -> r.get("openai"))
             .isInstanceOf(IllegalStateException.class)
             .hasMessageContaining("OPENAI_API_KEY");
+        assertThatThrownBy(() -> r.get("ollama"))
+            .isInstanceOf(IllegalStateException.class)
+            .hasMessageContaining("Ollama");
         assertThatThrownBy(() -> r.get("deepseek"))
             .isInstanceOf(IllegalStateException.class)
             .hasMessageContaining("DEEPSEEK_API_KEY");
@@ -83,8 +99,8 @@ class ChatClientRegistryTest {
 
     @Test
     void configuredProviders_returnsAllKeys() {
-        var r = registry(Map.of("anthropic", anthropic, "deepseek", deepseek, "minimax", minimax));
+        var r = registry(Map.of("anthropic", anthropic, "ollama", ollama, "deepseek", deepseek, "minimax", minimax));
         assertThat(r.configuredProviders())
-            .containsExactlyInAnyOrder("anthropic", "deepseek", "minimax");
+            .containsExactlyInAnyOrder("anthropic", "ollama", "deepseek", "minimax");
     }
 }

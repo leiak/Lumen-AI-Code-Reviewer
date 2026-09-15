@@ -23,7 +23,7 @@ import java.util.concurrent.Callable;
     name = "review",
     mixinStandardHelpOptions = true,
     version = "review 1.0.0",
-    description = "AI Code Review Council",
+    description = "Lumen AI Code Reviewer",
     subcommands = { ReviewCli.RunCmd.class, ReviewCli.ValidateCmd.class, ReviewCli.CostCmd.class, ReviewCli.GraphCmd.class }
 )
 public class ReviewCli implements Runnable {

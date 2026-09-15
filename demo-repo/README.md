@@ -12,10 +12,10 @@ A tiny Java project with intentional bugs, used to demo the AI Code Review Counc
 ```bash
 # 1. Start the council from this project's root
 cd ..
-java -jar target/review.jar validate --config=council.yaml
+java -jar target/lumen.jar validate --config=council.yaml
 
 # 2. (when you have ANTHROPIC_API_KEY set)
-java -jar target/review.jar run --config=council.yaml
+java -jar target/lumen.jar run --config=council.yaml
 # → should report: 3-4 findings (1 critical SQL injection, 1 major N+1, 1 major secret, 1 minor resource leak)
 ```
 

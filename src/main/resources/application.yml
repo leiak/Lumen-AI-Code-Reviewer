@@ -1,6 +1,6 @@
 spring:
   application:
-    name: review-council
+    name: lumen-ai-code-reviewer
   config:
     # 加载项目根的 .env（不存在不报错）。Spring Boot 3.0+ 原生支持。
     # .env 已 .gitignore；.env.example 是模板。
@@ -44,6 +44,11 @@ spring.ai:
     chat:
       options:
         model: gpt-5
+  ollama:
+    base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+    chat:
+      options:
+        model: ${OLLAMA_MODEL:qwen2.5-coder:32b}
 
 logging:
   level:

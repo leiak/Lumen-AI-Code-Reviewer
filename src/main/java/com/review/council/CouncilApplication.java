@@ -31,7 +31,8 @@ public class CouncilApplication {
                 String.join(", ", providers));
 
             if (serveMode) {
-                System.out.println("Web server started. Use the API at http://localhost:8080");
+                System.out.println("Lumen AI Code Reviewer — web server started.");
+                System.out.println("Use the API at http://localhost:8080");
                 System.out.println("Press Ctrl+C to stop.");
                 return; // keep server running
             }

@@ -1,4 +1,4 @@
-/** API client for the review-council backend. */
+/** API client for the Lumen AI Code Reviewer backend. */
 const BASE = '/api';
 
 export interface ValidateResult {

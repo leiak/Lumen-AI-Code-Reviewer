@@ -33,7 +33,7 @@ export default function App() {
         </Routes>
       </main>
       <footer className="border-t border-slate-200 bg-white text-center text-xs text-slate-500 py-3">
-        review-council v1.0 · Spring AI 1.1 + LangGraph4j 1.6
+        Lumen AI Code Reviewer v1.1 · Spring AI 1.1 + LangGraph4j 1.6
       </footer>
     </div>
   );

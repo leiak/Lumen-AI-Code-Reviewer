@@ -1,4 +1,4 @@
-# AI Code Review Council
+# Lumen AI Code Reviewer
 
 多模型对弈式代码评审系统。三层架构：
 - **Spring AI 1.1** - 模型与工具接入
@@ -11,6 +11,7 @@
 |---|---|---|---|
 | Anthropic | `claude-*` | 原生 | `ANTHROPIC_API_KEY` |
 | OpenAI | `gpt-*` / `o*` | 原生 | `OPENAI_API_KEY` |
+| **Ollama（本地）** | `qwen*` / `llama*` / `mistral*` / `codellama*` / `gemma*` / `phi*` | 原生 | 启动 `ollama serve` 即可，无需 key |
 | DeepSeek | `deepseek-chat` / `deepseek-coder` / `deepseek-reasoner` | OpenAI 兼容 | `DEEPSEEK_API_KEY`（可选 `DEEPSEEK_BASE_URL` / `DEEPSEEK_MODEL`） |
 | MiniMax | `MiniMax-Text-01` / `abab*` | OpenAI 兼容 | `MINIMAX_API_KEY`（可选 `MINIMAX_BASE_URL` / `MINIMAX_MODEL`） |
 
@@ -25,8 +26,8 @@
 mvn -B package
 
 # 2. 启动后端（一个终端）
-java -jar target/review.jar serve --server.port=8090
-# → 看到 "Started CouncilApplication" 即就绪
+java -jar target/lumen.jar serve --server.port=8090
+# → 看到 "Started CouncilApplication" + "LLM providers loaded: ..." 即就绪
 
 # 3. 启动前端（另一个终端）
 cd frontend
@@ -71,7 +72,7 @@ http://localhost:5789/validate
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...
-java -jar target/review.jar run --config=council.yaml
+java -jar target/lumen.jar run --config=council.yaml
 ```
 
 CLI 会输出：
@@ -83,7 +84,7 @@ CLI 会输出：
 ## CLI 一览
 
 ```bash
-java -jar target/review.jar --help
+java -jar target/lumen.jar --help
 
 # 子命令
 run       # 跑评审（需 API key）
@@ -109,20 +110,20 @@ export JAVA_HOME=/path/to/java-21
 mvn -B package
 
 # 校验配置
-java -jar target/review.jar validate --config=council.yaml
+java -jar target/lumen.jar validate --config=council.yaml
 
 # 运行评审（需要 ANTHROPIC_API_KEY 环境变量）
 export ANTHROPIC_API_KEY=sk-ant-...
-java -jar target/review.jar run HEAD
+java -jar target/lumen.jar run HEAD
 
 # 查看成本
-java -jar target/review.jar cost rev-abc12345
+java -jar target/lumen.jar cost rev-abc12345
 
 # 打印 LangGraph4j StateGraph 拓扑 (Mermaid)
-java -jar target/review.jar graph --config=council.yaml
+java -jar target/lumen.jar graph --config=council.yaml
 
 # 启动 Web API (端口 8080，配置改用 --server.port=N)
-java -jar target/review.jar serve --server.port=8090
+java -jar target/lumen.jar serve --server.port=8090
 
 # 调用 API
 curl -s http://localhost:8090/health
@@ -230,19 +231,19 @@ src/main/resources/
 
 ```bash
 # 1. 验证配置文件
-java -jar target/review.jar validate --config=council.yaml
+java -jar target/lumen.jar validate --config=council.yaml
 
 # 2. 打印 LangGraph4j StateGraph 拓扑（真实图）
-java -jar target/review.jar graph --config=council.yaml
+java -jar target/lumen.jar graph --config=council.yaml
 
 # 3. 启动 Web API 并 curl 测试
-java -jar target/review.jar serve --server.port=8090 &
+java -jar target/lumen.jar serve --server.port=8090 &
 curl -s http://localhost:8090/health
 curl -s -X POST -H "Content-Type: text/plain" --data-binary @council.yaml http://localhost:8090/validate
 
 # 4. 跑 demo（需要 ANTHROPIC_API_KEY）
 export ANTHROPIC_API_KEY=sk-ant-...
-java -jar target/review.jar run --config=council.yaml
+java -jar target/lumen.jar run --config=council.yaml
 
 # 5. 启动前端（需要 Node 18+）
 cd frontend
@@ -271,3 +272,4 @@ Vite dev server 把 `/api/*` 代理到后端的 `http://localhost:8090`，所以
 | Spring AI | 2.0.0 | 1.1.0 | 2.0 国内镜像下载慢；API 一致 |
 | Graph 编排 | LangGraph4j StateGraph + 拓扑 + 并行 dispatch | ✅ StateGraph 已上线，`graph` 命令可视化 | 并行 reviewer 在 dispatch 节点内用 ExecutorService |
 | Jaccard 阈值 | 0.85 | 0.7 | 实际 LLM 输出词序变化多，0.85 太严格 |
+| 项目名 | `review-council` (Gradle) | `lumen-ai-code-reviewer` (Maven) | 重命名匹配 GitHub repo；Java 包名 `com.review.council` 保留（内部） |

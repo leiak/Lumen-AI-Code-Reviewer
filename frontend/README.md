@@ -1,4 +1,4 @@
-# review-council frontend
+# Lumen AI Code Reviewer frontend
 
 Vite + React + TypeScript + Tailwind dashboard for the AI Code Review Council backend.
 
@@ -9,7 +9,7 @@ npm install
 
 # 2. start backend (in repo root, separate terminal)
 cd ..
-java -jar target/review.jar serve --server.port=8090
+java -jar target/lumen.jar serve --server.port=8090
 
 # 3. start dev server
 npm run dev

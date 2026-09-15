@@ -43,7 +43,7 @@ export default function Dashboard() {
           <div className="font-mono text-sm">后端状态：{status === 'ok' ? '正常' : status === 'unreachable' ? '无法连接' : '检测中…'}</div>
           <div className="text-xs text-slate-500">
             预期地址 <code>http://localhost:8090</code>。启动命令：
-            <code className="ml-1 px-1.5 py-0.5 bg-slate-100 rounded">java -jar target\review.jar serve --server.port=8090</code>
+            <code className="ml-1 px-1.5 py-0.5 bg-slate-100 rounded">java -jar target\lumen.jar serve --server.port=8090</code>
           </div>
         </div>
       </section>

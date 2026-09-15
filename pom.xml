@@ -12,9 +12,10 @@
     </parent>
 
     <groupId>com.review</groupId>
-    <artifactId>review-council</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
-    <name>AI Code Review Council</name>
+    <artifactId>lumen-ai-code-reviewer</artifactId>
+    <version>1.1.0-SNAPSHOT</version>
+    <name>Lumen AI Code Reviewer</name>
+    <description>Multi-model AI code review (Spring AI + LangGraph4j), CLI/Web/UI</description>
 
     <properties>
         <java.version>21</java.version>
@@ -63,6 +64,10 @@
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-starter-model-openai</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-model-ollama</artifactId>
         </dependency>
 
         <!-- LangGraph4j -->
@@ -125,7 +130,7 @@
     </dependencies>
 
     <build>
-        <finalName>review</finalName>
+        <finalName>lumen</finalName>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>

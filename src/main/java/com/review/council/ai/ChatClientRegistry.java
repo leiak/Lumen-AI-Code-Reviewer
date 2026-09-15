@@ -19,6 +19,7 @@ public class ChatClientRegistry {
         throw new IllegalStateException(switch (providerName) {
             case "anthropic" -> "Anthropic ChatClient not configured. Set ANTHROPIC_API_KEY.";
             case "openai"    -> "OpenAI ChatClient not configured. Set OPENAI_API_KEY.";
+            case "ollama"    -> "Ollama ChatClient not configured. Start Ollama at OLLAMA_BASE_URL.";
             case "deepseek"  -> "DeepSeek ChatClient not configured. Set DEEPSEEK_API_KEY.";
             case "minimax"   -> "MiniMax ChatClient not configured. Set MINIMAX_API_KEY.";
             default -> "Unknown provider: " + providerName
@@ -32,6 +33,8 @@ public class ChatClientRegistry {
      *    deepseek-*, deepseek-chat   → deepseek
      *    MiniMax-*, abab*            → minimax
      *    claude-*                    → anthropic
+     *    qwen*, llama*, mistral*,    → ollama   (本地模型默认走 ollama)
+     *      codellama*, gemma*, phi*
      *    default                     → anthropic
      */
     public ChatClient resolve(String modelName) {
@@ -41,6 +44,11 @@ public class ChatClientRegistry {
         if (lower.startsWith("deepseek")) return get("deepseek");
         if (modelName.startsWith("MiniMax") || lower.startsWith("abab")) return get("minimax");
         if (lower.startsWith("claude-")) return get("anthropic");
+        if (lower.startsWith("qwen") || lower.startsWith("llama")
+            || lower.startsWith("mistral") || lower.startsWith("codellama")
+            || lower.startsWith("gemma") || lower.startsWith("phi")) {
+            return get("ollama");
+        }
         return get("anthropic"); // sensible default
     }
 
