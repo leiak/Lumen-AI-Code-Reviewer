@@ -5,6 +5,8 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5789,
+    host: '0.0.0.0',
+    strictPort: true,
     proxy: {
       // Proxy /api/* to the Spring Boot server
       '/api': {
