@@ -11,8 +11,9 @@ export default defineConfig({
       // Proxy /api/* to the Spring Boot server.
       // Override via REVIEW_BACKEND_URL env var, e.g. for staging.
       '/api': {
-        // 显式 IPv4 + 8090 端口：localhost 在 Windows 默认解析到 IPv6 ::1，会 ECONNREFUSED
-        target: process.env.REVIEW_BACKEND_URL || 'http://127.0.0.1:8090',
+        // 显式 IPv4 (localhost 在 Windows 默认解析到 IPv6 ::1, 会 ECONNREFUSED).
+        // Spring Boot review-council.jar serve 监听 8080,不是 8090。
+        target: process.env.REVIEW_BACKEND_URL || 'http://127.0.0.1:8080',
         changeOrigin: true,
         rewrite: (p) => p.replace(/^\/api/, ''),
       },
