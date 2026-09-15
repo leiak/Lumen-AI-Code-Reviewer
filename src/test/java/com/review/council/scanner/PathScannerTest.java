@@ -36,4 +36,34 @@ class PathScannerTest {
         int rc = p.waitFor();
         if (rc != 0) throw new AssertionError("git " + String.join(" ", gitArgs) + " failed: " + new String(p.getInputStream().readAllBytes()));
     }
+
+    @Test
+    void skips_non_matching_extension(@TempDir Path repoDir) throws Exception {
+        runGit(repoDir, "init");
+        runGit(repoDir, "config", "user.email", "t@t");
+        runGit(repoDir, "config", "user.name", "t");
+        Files.writeString(repoDir.resolve("keep.java"), "class K {}");
+        Files.writeString(repoDir.resolve("README.md"), "# notes");
+        Files.writeString(repoDir.resolve("data.json"), "{}");
+
+        var scanner = new PathScanner(ScanOptions.defaults().withPath(repoDir.toString()));
+        var entries = scanner.scan();
+        assertThat(entries).extracting(FileEntry::path).containsExactly("keep.java");
+    }
+
+    @Test
+    void skips_oversized_file(@TempDir Path repoDir) throws Exception {
+        runGit(repoDir, "init");
+        runGit(repoDir, "config", "user.email", "t@t");
+        runGit(repoDir, "config", "user.name", "t");
+        Files.writeString(repoDir.resolve("small.java"), "class S {}");
+        Files.writeString(repoDir.resolve("big.java"), "x".repeat(600_000));  // > 500KB default
+
+        var opts = ScanOptions.defaults()
+            .withPath(repoDir.toString())
+            .withMaxFileSizeBytes(500_000);
+        var scanner = new PathScanner(opts);
+        var entries = scanner.scan();
+        assertThat(entries).extracting(FileEntry::path).containsExactly("small.java");
+    }
 }
