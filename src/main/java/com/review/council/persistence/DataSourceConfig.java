@@ -25,7 +25,7 @@ public class DataSourceConfig {
         // Apply all migrations from classpath in order (V1, V2, ...)
         try (var c = ds.getConnection(); var s = c.createStatement()) {
             applyMigration(s, "/db/migration/V1__init.sql");
-            applyMigration(s, "/db/migration/V2__scan_metadata.sql");
+            applyV2Idempotent(c);
         }
         return ds;
     }
@@ -38,6 +38,39 @@ public class DataSourceConfig {
                 var trimmed = stmt.trim();
                 if (!trimmed.isEmpty()) s.execute(trimmed);
             }
+        }
+    }
+
+    /**
+     * V2 adds columns and an index. SQLite has no ADD COLUMN IF NOT EXISTS,
+     * so we check pragma_table_info before each ALTER.
+     */
+    private static void applyV2Idempotent(java.sql.Connection c) throws Exception {
+        try (var s = c.createStatement()) {
+            // Index is idempotent via IF NOT EXISTS
+            s.execute("CREATE INDEX IF NOT EXISTS idx_audit_chunk ON audit_events(session_id, chunk_id)");
+
+            addColumnIfMissing(c, "review_sessions", "scan_root", "TEXT");
+            addColumnIfMissing(c, "review_sessions", "total_files", "INTEGER");
+            addColumnIfMissing(c, "review_sessions", "total_chunks", "INTEGER");
+            addColumnIfMissing(c, "audit_events", "chunk_id", "TEXT");
+        }
+    }
+
+    private static void addColumnIfMissing(java.sql.Connection c, String table, String column, String type) throws Exception {
+        if (columnExists(c, table, column)) return;
+        try (var s = c.createStatement()) {
+            s.execute("ALTER TABLE " + table + " ADD COLUMN " + column + " " + type);
+        }
+    }
+
+    private static boolean columnExists(java.sql.Connection c, String table, String column) throws Exception {
+        try (var ps = c.prepareStatement("PRAGMA table_info(" + table + ")");
+             var rs = ps.executeQuery()) {
+            while (rs.next()) {
+                if (column.equalsIgnoreCase(rs.getString("name"))) return true;
+            }
+            return false;
         }
     }
 }

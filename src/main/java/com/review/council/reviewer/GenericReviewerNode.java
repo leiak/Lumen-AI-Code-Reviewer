@@ -47,7 +47,17 @@ public class GenericReviewerNode implements ReviewerNode {
                 String.format("{\"model\":\"%s\",\"tokens\":%d}", cfg.model(), promptTok + compTok));
 
             var raw = parser.parse(response);
-            return raw.stream().map(f -> Finding.of(role, f.severity(), f.line(), f.message(), f.suggestedFix())).toList();
+            // When the diff has exactly one file, attribute findings to that file.
+            // For multi-file diffs, leave filePath null (LLM should ideally mention it in message).
+            String defaultFilePath = state.diff().files().size() == 1
+                ? state.diff().files().get(0).path()
+                : null;
+            return raw.stream().map(f -> Finding.of(role, f.severity(), f.line(),
+                f.message(), f.suggestedFix())).toList()
+                .stream()
+                .map(f -> new Finding(f.id(), f.reviewerRole(), f.severity(), f.line(),
+                    f.message(), f.suggestedFix(), null, defaultFilePath))
+                .toList();
         } catch (Exception e) {
             ctx.audit().record(ctx.sessionId(), "reviewer_" + role, "error", "{\"error\":\"" + e.getMessage() + "\"}");
             return List.of();

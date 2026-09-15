@@ -1,7 +1,6 @@
-ALTER TABLE review_sessions ADD COLUMN scan_root TEXT;
-ALTER TABLE review_sessions ADD COLUMN total_files INTEGER;
-ALTER TABLE review_sessions ADD COLUMN total_chunks INTEGER;
+-- V2: scan-whole-project metadata.
+-- Note: SQLite ALTER TABLE ADD COLUMN has no IF NOT EXISTS clause.
+-- DataSourceConfig.applyMigration handles idempotency by checking
+-- PRAGMA table_info before issuing ALTER for each column.
 
--- Per-call progress: each (chunkId, reviewer) pair logs one row
-ALTER TABLE audit_events ADD COLUMN chunk_id TEXT;
 CREATE INDEX IF NOT EXISTS idx_audit_chunk ON audit_events(session_id, chunk_id);
