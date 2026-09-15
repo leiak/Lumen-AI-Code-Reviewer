@@ -35,3 +35,9 @@ target/
 .mvn/
 mvnw
 mvnw.cmd
+
+# Frontend
+frontend/dist/
+frontend/node_modules/
+frontend/.vite/
+frontend/tsconfig.tsbuildinfo

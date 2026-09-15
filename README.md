@@ -52,6 +52,7 @@ curl -s "http://localhost:8090/sessions/rev-abc12345/graph?format=mermaid"
 | Web API：/health /validate /sessions /cost /graph | ✅ |
 | LangGraph4j StateGraph 拓扑定义 + 并行 dispatch | ✅（CLI `graph` 显示 Mermaid/PlantUML） |
 | Demo repo（含 SQL 注入 / N+1 / 资源泄漏 / 硬编码密钥） | ✅ `demo-repo/` |
+| 前端 SPA（Vite + React + TS + Tailwind + Mermaid） | ✅ `frontend/` |
 
 ## 测试覆盖
 
@@ -144,7 +145,24 @@ curl -s -X POST -H "Content-Type: text/plain" --data-binary @council.yaml http:/
 # 4. 跑 demo（需要 ANTHROPIC_API_KEY）
 export ANTHROPIC_API_KEY=sk-ant-...
 java -jar target/review.jar run --config=council.yaml
+
+# 5. 启动前端（需要 Node 18+）
+cd frontend
+npm install
+npm run dev    # → http://localhost:5173（自动代理 /api → :8090）
 ```
+
+## 前端
+
+`frontend/` 是 Vite + React + TypeScript + Tailwind + Mermaid 的单页应用。
+
+页面：
+- **Dashboard** — 后端健康检查 + 快捷入口 + session 查询
+- **Validate** — 粘贴 `council.yaml` 实时校验
+- **Graph** — 实时渲染 LangGraph4j StateGraph 拓扑（Mermaid）
+- **Session detail** — 单个 session 的 cost / tokens / 原始 JSON
+
+Vite dev server 把 `/api/*` 代理到后端的 `http://localhost:8090`，所以浏览器里直接 `fetch('/api/...')` 即可。生产构建用 `npm run build` 输出到 `frontend/dist/`，可挂到任意静态服务器。
 
 ## 调整说明（vs spec）
 
