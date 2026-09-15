@@ -87,7 +87,7 @@ public class ReviewController {
     }
 
     @GetMapping(value = "/sessions/{id}/graph", produces = "text/plain")
-    public String graph(@RequestParam(defaultValue = "mermaid") String format) throws Exception {
+    public String graphMermaid(@RequestParam(defaultValue = "mermaid") String format) throws Exception {
         CouncilConfig config;
         try (var in = new java.io.FileInputStream("./council.yaml")) {
             config = loader.load(in);
@@ -97,6 +97,21 @@ public class ReviewController {
             ? org.bsc.langgraph4j.GraphRepresentation.Type.PLANTUML
             : org.bsc.langgraph4j.GraphRepresentation.Type.MERMAID;
         return g.getGraph(type, config.name()).content();
+    }
+
+    /**
+     * Structured topology for the new UI (v1.1).
+     * Returns JSON with typed nodes / edges / legend so the frontend can render
+     * a clean graph without relying on LangGraph4j's verbatim mermaid template
+     * (which produces duplicate commented edges and no styling on __START__/__END__).
+     */
+    @GetMapping(value = "/sessions/{id}/graph", produces = "application/json")
+    public Map<String, Object> graphJson(@PathVariable String id) throws Exception {
+        CouncilConfig config;
+        try (var in = new java.io.FileInputStream("./council.yaml")) {
+            config = loader.load(in);
+        }
+        return com.review.council.graph.CouncilGraphTopology.build(config);
     }
 
     @PostMapping(value = "/validate", consumes = "text/plain")
