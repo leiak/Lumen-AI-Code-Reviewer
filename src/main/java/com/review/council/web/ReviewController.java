@@ -171,6 +171,7 @@ public class ReviewController {
 
         var result = scanOrch.run(sessionId, config, chunks, opts.path(), opts.concurrency());
         sessions.updateStatus(sessionId, "completed", "done");
+        sessions.recordScanMetadata(sessionId, result.scanRoot(), result.totalFiles(), result.totalChunks());
 
         return Map.of(
             "sessionId", sessionId,

@@ -68,6 +68,33 @@ export default function SessionDetail() {
         </div>
       )}
 
+      {/* Scan metadata — visible only for scan sessions */}
+      {Boolean(session && (session as { scanRoot?: string }).scanRoot) && (
+        <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
+          <h3 className="font-semibold text-slate-800 mb-3">扫描元数据</h3>
+          <dl className="grid sm:grid-cols-3 gap-3 text-sm">
+            <div>
+              <dt className="text-xs text-slate-500 uppercase">扫描根</dt>
+              <dd className="font-mono text-slate-800 break-all">
+                {(session as { scanRoot: string }).scanRoot}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs text-slate-500 uppercase">文件数</dt>
+              <dd className="text-slate-800">
+                {(session as { totalFiles?: number }).totalFiles ?? '—'}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs text-slate-500 uppercase">chunk 数</dt>
+              <dd className="text-slate-800">
+                {(session as { totalChunks?: number }).totalChunks ?? '—'}
+              </dd>
+            </div>
+          </dl>
+        </div>
+      )}
+
       {demo && (
         <>
           <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">

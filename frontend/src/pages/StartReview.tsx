@@ -327,9 +327,17 @@ function ResultView({ result, onAgain }: { result: StartResponse; onAgain: () =>
 }
 
 function ScanResultView({ result, onAgain }: { result: ScanResponse; onAgain: () => void }) {
-  const findings = [...(result.findings ?? [])].sort(
-    (a, b) => severityRank(a.severity) - severityRank(b.severity)
-  );
+  const [reviewerFilter, setReviewerFilter] = useState<string | null>(null);
+  const [severityFilter, setSeverityFilter] = useState<string | null>(null);
+  const [showFiles, setShowFiles] = useState(false);
+
+  const allFindings = result.findings ?? [];
+  const findings = allFindings
+    .filter(f => !reviewerFilter || f.reviewer === reviewerFilter)
+    .filter(f => !severityFilter || f.severity === severityFilter)
+    .sort((a, b) => severityRank(a.severity) - severityRank(b.severity));
+
+  const reviewersInResult = Array.from(new Set(allFindings.map(f => f.reviewer)));
 
   return (
     <div className="space-y-5">
@@ -338,8 +346,18 @@ function ScanResultView({ result, onAgain }: { result: ScanResponse; onAgain: ()
         <div className="flex-1">
           <div className="font-semibold text-emerald-800">扫描完成</div>
           <div className="text-sm text-emerald-700 font-mono">{result.sessionId}</div>
+          {result.scanRoot && (
+            <div className="text-xs text-emerald-600 font-mono mt-1">
+              扫描根：{result.scanRoot}
+            </div>
+          )}
         </div>
         <div className="flex gap-2">
+          <Link
+            to={`/sessions/${result.sessionId}`}
+            className="text-sm px-3 py-1.5 rounded border border-emerald-300 text-emerald-800 hover:bg-emerald-100">
+            打开详情
+          </Link>
           <button
             onClick={onAgain}
             className="text-sm px-3 py-1.5 rounded bg-council-500 text-white hover:bg-council-700">
@@ -367,13 +385,98 @@ function ScanResultView({ result, onAgain }: { result: ScanResponse; onAgain: ()
         </div>
       </div>
 
+      {/* Per-reviewer breakdown */}
+      {result.perReviewer && Object.keys(result.perReviewer).length > 0 && (
+        <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
+          <h3 className="font-semibold text-slate-800 mb-3">各 reviewer 产出</h3>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {Object.entries(result.perReviewer).map(([role, sum]) => (
+              <div key={role} className="p-3 rounded border border-slate-200 bg-slate-50">
+                <div className="flex items-baseline justify-between">
+                  <div className="font-medium text-slate-800">{role}</div>
+                  <div className="text-sm text-slate-600">
+                    ${sum.costUsd.toFixed(4)}
+                  </div>
+                </div>
+                <div className="mt-1 text-xs text-slate-500">
+                  {sum.findingsCount} findings · in={sum.tokensIn.toLocaleString()} out={sum.tokensOut.toLocaleString()}
+                </div>
+                <div className="mt-2 flex gap-2 text-xs">
+                  <span className="px-1.5 py-0.5 rounded bg-red-100 text-red-700">
+                    critical {sum.bySeverity.critical ?? 0}
+                  </span>
+                  <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-700">
+                    major {sum.bySeverity.major ?? 0}
+                  </span>
+                  <span className="px-1.5 py-0.5 rounded bg-slate-200 text-slate-700">
+                    minor {sum.bySeverity.minor ?? 0}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Scanned files (collapsible) */}
+      {result.files && result.files.length > 0 && (
+        <div className="bg-white rounded-lg shadow-sm border border-slate-200">
+          <button
+            onClick={() => setShowFiles(s => !s)}
+            className="w-full p-4 flex items-center justify-between text-left hover:bg-slate-50">
+            <span className="font-semibold text-slate-800">
+              扫描的文件（{result.files.length}）
+            </span>
+            <span className="text-slate-400">{showFiles ? '▾' : '▸'}</span>
+          </button>
+          {showFiles && (
+            <div className="px-4 pb-4 max-h-72 overflow-auto">
+              <ul className="text-xs font-mono space-y-0.5">
+                {result.files.map(p => (
+                  <li key={p} className="text-slate-600 truncate" title={p}>{p}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Findings with filters */}
       <div className="bg-white rounded-lg p-4 shadow-sm border border-slate-200">
-        <h3 className="font-semibold text-slate-800 mb-3">
-          问题清单（{findings.length}）
-        </h3>
+        <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+          <h3 className="font-semibold text-slate-800">
+            问题清单（{findings.length}{findings.length !== allFindings.length ? ` / ${allFindings.length}` : ''}）
+          </h3>
+          <div className="flex gap-2 flex-wrap">
+            <FilterChip
+              label="全部 reviewer"
+              active={reviewerFilter === null}
+              onClick={() => setReviewerFilter(null)} />
+            {reviewersInResult.map(r => (
+              <FilterChip
+                key={r}
+                label={r}
+                active={reviewerFilter === r}
+                onClick={() => setReviewerFilter(reviewerFilter === r ? null : r)} />
+            ))}
+            <span className="w-px bg-slate-200 mx-1" />
+            <FilterChip
+              label="全部级别"
+              active={severityFilter === null}
+              onClick={() => setSeverityFilter(null)} />
+            {(['critical', 'major', 'minor'] as const).map(s => (
+              <FilterChip
+                key={s}
+                label={severityCn(s)}
+                active={severityFilter === s}
+                color={severityClass(s).split(' ').find(c => c.startsWith('border-'))}
+                onClick={() => setSeverityFilter(severityFilter === s ? null : s)} />
+            ))}
+          </div>
+        </div>
         {findings.length === 0 ? (
           <div className="text-sm text-slate-500 py-4 text-center">
-            🎉 没发现问题
+            {allFindings.length === 0 ? '🎉 没发现问题' : '（当前筛选无匹配）'}
           </div>
         ) : (
           <div className="space-y-2">
@@ -382,9 +485,14 @@ function ScanResultView({ result, onAgain }: { result: ScanResponse; onAgain: ()
                 <div className="flex items-baseline gap-2 flex-wrap">
                   <span className="text-xs font-bold uppercase">{severityCn(f.severity)}</span>
                   <span className="text-xs text-slate-600">· {f.reviewer}</span>
-                  {f.file && (
+                  {(f.filePath ?? f.file) && (
                     <span className="text-xs text-slate-600 font-mono">
-                      · {f.file}{f.line ? `:${f.line}` : ''}
+                      · {f.filePath ?? f.file}{f.line ? `:${f.line}` : ''}
+                    </span>
+                  )}
+                  {f.chunkId && (
+                    <span className="text-xs text-slate-400 font-mono" title="所属 chunk">
+                      · chunk {f.chunkId}
                     </span>
                   )}
                   {f.category && (
@@ -398,5 +506,20 @@ function ScanResultView({ result, onAgain }: { result: ScanResponse; onAgain: ()
         )}
       </div>
     </div>
+  );
+}
+
+function FilterChip({ label, active, onClick, color }:
+  { label: string; active: boolean; onClick: () => void; color?: string }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`text-xs px-2.5 py-1 rounded-full border transition ${
+        active
+          ? 'bg-council-500 text-white border-council-500'
+          : `bg-white text-slate-600 hover:bg-slate-100 ${color ?? 'border-slate-300'}`
+      }`}>
+      {label}
+    </button>
   );
 }

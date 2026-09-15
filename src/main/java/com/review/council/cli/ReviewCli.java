@@ -235,6 +235,7 @@ public class ReviewCli implements Runnable {
 
             var result = scanOrch.run(sessionId, config, chunks, path, concurrency);
             sessions.updateStatus(sessionId, "completed", "done");
+            sessions.recordScanMetadata(sessionId, result.scanRoot(), result.totalFiles(), result.totalChunks());
 
             var counts = result.findings().stream().collect(
                 java.util.stream.Collectors.groupingBy(Finding::severity,

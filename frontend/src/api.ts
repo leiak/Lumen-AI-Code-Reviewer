@@ -14,6 +14,8 @@ export interface Finding {
   severity: 'critical' | 'major' | 'minor';
   reviewer: string;
   file: string;
+  filePath?: string;       // scan responses use this; diff responses use file
+  chunkId?: string;        // scan only — which chunk this finding came from
   line?: number;
   message: string;
   category: string;
@@ -176,11 +178,22 @@ export interface ScanOptions {
   concurrency?: number;
 }
 
+export interface PerReviewerSummary {
+  findingsCount: number;
+  tokensIn: number;
+  tokensOut: number;
+  costUsd: number;
+  bySeverity: Record<'critical' | 'major' | 'minor', number>;
+}
+
 export interface ScanResponse {
   sessionId: string;
+  scanRoot: string;
   totalFiles: number;
   totalChunks: number;
   reviewers: string[];
+  files: string[];
+  perReviewer: Record<string, PerReviewerSummary>;
   findings: Finding[];
   cost: number;
   durationMs: number;

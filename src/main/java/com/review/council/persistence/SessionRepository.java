@@ -25,7 +25,7 @@ public class SessionRepository {
     }
 
     public Optional<Session> load(String id) {
-        var sql = "SELECT id, config_hash, config_snapshot, status, current_node, diff_hash, diff_content FROM review_sessions WHERE id = ?";
+        var sql = "SELECT id, config_hash, config_snapshot, status, current_node, diff_hash, diff_content, scan_root, total_files, total_chunks FROM review_sessions WHERE id = ?";
         try (var c = ds.getConnection(); var ps = c.prepareStatement(sql)) {
             ps.setString(1, id);
             try (var rs = ps.executeQuery()) {
@@ -37,7 +37,10 @@ public class SessionRepository {
                     rs.getString("status"),
                     rs.getString("current_node"),
                     rs.getString("diff_hash"),
-                    rs.getString("diff_content")
+                    rs.getString("diff_content"),
+                    rs.getString("scan_root"),
+                    rs.getObject("total_files") != null ? rs.getInt("total_files") : null,
+                    rs.getObject("total_chunks") != null ? rs.getInt("total_chunks") : null
                 ));
             }
         } catch (SQLException e) { throw new RuntimeException(e); }
@@ -53,6 +56,19 @@ public class SessionRepository {
         } catch (SQLException e) { throw new RuntimeException(e); }
     }
 
+    /** Persist scan metadata after scan() completes so SessionDetail can render it. */
+    public void recordScanMetadata(String id, String scanRoot, int totalFiles, int totalChunks) {
+        var sql = "UPDATE review_sessions SET scan_root = ?, total_files = ?, total_chunks = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?";
+        try (var c = ds.getConnection(); var ps = c.prepareStatement(sql)) {
+            ps.setString(1, scanRoot);
+            ps.setInt(2, totalFiles);
+            ps.setInt(3, totalChunks);
+            ps.setString(4, id);
+            ps.executeUpdate();
+        } catch (SQLException e) { throw new RuntimeException(e); }
+    }
+
     public record Session(String id, String configHash, String configSnapshot,
-                          String status, String currentNode, String diffHash, String diffContent) {}
+                          String status, String currentNode, String diffHash, String diffContent,
+                          String scanRoot, Integer totalFiles, Integer totalChunks) {}
 }

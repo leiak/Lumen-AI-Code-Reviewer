@@ -29,6 +29,17 @@ class RepositoryTest {
                 if (!t.isEmpty()) st.execute(t);
             }
         }
+        // V2: scan metadata columns + audit index. Production runs these via
+        // DataSourceConfig.applyV2Idempotent(); test bypasses that, so replicate.
+        try (var c = src.getConnection(); var st = c.createStatement()) {
+            st.execute("ALTER TABLE review_sessions ADD COLUMN scan_root TEXT");
+            st.execute("ALTER TABLE review_sessions ADD COLUMN total_files INTEGER");
+            st.execute("ALTER TABLE review_sessions ADD COLUMN total_chunks INTEGER");
+            st.execute("ALTER TABLE audit_events ADD COLUMN chunk_id TEXT");
+            st.execute("CREATE INDEX IF NOT EXISTS idx_audit_chunk ON audit_events(session_id, chunk_id)");
+        } catch (Exception ignore) {
+            // columns may already exist (re-run); SQLite has no IF NOT EXISTS for ALTER
+        }
         ds = src;
     }
 
