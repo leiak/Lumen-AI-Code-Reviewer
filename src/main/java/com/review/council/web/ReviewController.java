@@ -150,33 +150,33 @@ public class ReviewController {
         var f1 = Map.<String, Object>of(
             "id", "f-001", "severity", "critical", "reviewer", "security",
             "file", "src/main/java/com/demo/app/UserService.java", "line", 15,
-            "message", "SQL injection via string concatenation in findByName. " +
-                "Use PreparedStatement with bound parameters instead.",
-            "category", "security");
+            "message", "SQL 注入：findByName 用字符串拼接构造 SQL。" +
+                "改用 PreparedStatement + 占位符绑定参数。",
+            "category", "安全");
         var f2 = Map.<String, Object>of(
             "id", "f-002", "severity", "major", "reviewer", "perf",
             "file", "src/main/java/com/demo/app/UserService.java", "line", 22,
-            "message", "N+1 query: getOrdersForUsers issues one SELECT per user. " +
-                "Batch with `WHERE user_id IN (?, ?, ...)` or JOIN.",
-            "category", "performance");
+            "message", "N+1 查询：getOrdersForUsers 每个 user 触发一次 SELECT。" +
+                "改用 `WHERE user_id IN (?, ?, ...)` 批量查或 JOIN。",
+            "category", "性能");
         var f3 = Map.<String, Object>of(
             "id", "f-003", "severity", "major", "reviewer", "security",
             "file", "src/main/java/com/demo/app/UserService.java", "line", 50,
-            "message", "Hardcoded password 'admin123' in DB_PASSWORD constant. " +
-                "Move to environment variable or secret store.",
-            "category", "security");
+            "message", "硬编码密码：DB_PASSWORD 常量写了 'admin123'。" +
+                "改用环境变量或 secret store 注入。",
+            "category", "安全");
         var f4 = Map.<String, Object>of(
             "id", "f-004", "severity", "minor", "reviewer", "architect",
             "file", "src/main/java/com/demo/app/UserService.java", "line", 38,
-            "message", "Resource leak: findAll does not close Connection/Statement/ResultSet. " +
-                "Use try-with-resources.",
-            "category", "reliability");
+            "message", "资源泄漏：findAll 未关闭 Connection/Statement/ResultSet。" +
+                "改用 try-with-resources。",
+            "category", "可靠性");
         var p1 = Map.<String, Object>of(
             "id", "p-001", "file", "src/main/java/com/demo/app/UserService.java",
-            "status", "applied", "description", "Replace string concat with PreparedStatement in findByName");
+            "status", "applied", "description", "findByName 改用 PreparedStatement（参数化查询）");
         var p2 = Map.<String, Object>of(
             "id", "p-002", "file", "src/main/java/com/demo/app/UserService.java",
-            "status", "applied", "description", "Wrap findAll resources in try-with-resources");
+            "status", "applied", "description", "findAll 改用 try-with-resources 释放资源");
         return Map.of(
             "sessionId", "rev-demo01",
             "rounds", 2,
@@ -184,7 +184,7 @@ public class ReviewController {
             "appliedPatches", List.of(p1, p2),
             "cost", 0.0423,
             "demo", true,
-            "note", "This is a static demo response. Real reviews require ANTHROPIC_API_KEY."
+            "note", "这是静态演示数据。真实评审需要配置 *_API_KEY 并从 /start 启动。"
         );
     }
 }

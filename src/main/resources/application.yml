@@ -14,8 +14,6 @@ spring:
       - org.springframework.ai.model.openai.autoconfigure.OpenAiImageAutoConfiguration
       - org.springframework.ai.model.openai.autoconfigure.OpenAiModerationAutoConfiguration
       - org.springframework.ai.model.anthropic.autoconfigure.AnthropicChatAutoConfiguration
-      - org.springframework.ai.model.ollama.autoconfigure.OllamaChatAutoConfiguration
-      - org.springframework.ai.model.ollama.autoconfigure.OllamaEmbeddingAutoConfiguration
 
 server:
   port: 8080
@@ -46,18 +44,8 @@ spring.ai:
     chat:
       options:
         model: gpt-5
-  ollama:
-    base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
-    chat:
-      options:
-        model: qwen2.5-coder:32b
-
-jamjet:
-  persistence:
-    backend: sqlite
 
 logging:
   level:
     com.review.council: INFO
     org.bsc.langgraph4j: WARN
-    dev.jamjet: INFO
