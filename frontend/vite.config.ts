@@ -11,7 +11,8 @@ export default defineConfig({
       // Proxy /api/* to the Spring Boot server.
       // Override via REVIEW_BACKEND_URL env var, e.g. for staging.
       '/api': {
-        target: process.env.REVIEW_BACKEND_URL || 'http://localhost:8080',
+        // 显式 IPv4 + 8090 端口：localhost 在 Windows 默认解析到 IPv6 ::1，会 ECONNREFUSED
+        target: process.env.REVIEW_BACKEND_URL || 'http://127.0.0.1:8090',
         changeOrigin: true,
         rewrite: (p) => p.replace(/^\/api/, ''),
       },
