@@ -1,20 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getCost, getSession, getDemoSession, type CostResponse, type DemoSession } from '../api';
-
-const SEVERITY_CLASS: Record<string, string> = {
-  critical: 'bg-red-100 text-red-800 border-red-300',
-  major: 'bg-amber-100 text-amber-800 border-amber-300',
-  minor: 'bg-emerald-100 text-emerald-800 border-emerald-300',
-};
-
-const SEVERITY_CN: Record<string, string> = {
-  critical: '严重',
-  major: '重要',
-  minor: '次要',
-};
-
-const SEVERITY_ORDER: Record<string, number> = { critical: 0, major: 1, minor: 2 };
+import { severityClass, severityCn, severityRank } from '../severity';
 
 export default function SessionDetail() {
   const { id } = useParams<{ id: string }>();
@@ -90,11 +77,11 @@ export default function SessionDetail() {
             <div className="space-y-2">
               {demo.findings
                 .slice()
-                .sort((a, b) => (SEVERITY_ORDER[a.severity] ?? 9) - (SEVERITY_ORDER[b.severity] ?? 9))
+                .sort((a, b) => severityRank(a.severity) - severityRank(b.severity))
                 .map(f => (
-                  <div key={f.id} className={`p-3 rounded border ${SEVERITY_CLASS[f.severity] ?? ''}`}>
+                  <div key={f.id} className={`p-3 rounded border ${severityClass(f.severity)}`}>
                     <div className="flex items-baseline gap-2">
-                      <span className="text-xs font-bold uppercase">{SEVERITY_CN[f.severity] ?? f.severity}</span>
+                      <span className="text-xs font-bold uppercase">{severityCn(f.severity)}</span>
                       <span className="text-xs text-slate-600">· {f.reviewer}</span>
                       <span className="text-xs text-slate-600">· {f.file}:{f.line}</span>
                     </div>

@@ -3,6 +3,7 @@ import Dashboard from './pages/Dashboard';
 import Validate from './pages/Validate';
 import SessionDetail from './pages/SessionDetail';
 import GraphView from './pages/GraphView';
+import StartReview from './pages/StartReview';
 
 export default function App() {
   const link = 'px-3 py-2 rounded-md text-sm font-medium hover:bg-council-50';
@@ -16,6 +17,7 @@ export default function App() {
           <h1 className="text-lg font-bold text-council-700">AI 代码评审委员会</h1>
           <nav className="flex gap-1 ml-auto">
             <NavLink to="/" className={active} end>仪表盘</NavLink>
+            <NavLink to="/start" className={active}>启动评审</NavLink>
             <NavLink to="/validate" className={active}>校验配置</NavLink>
             <NavLink to="/graph" className={active}>状态图</NavLink>
           </nav>
@@ -24,6 +26,7 @@ export default function App() {
       <main className="flex-1 max-w-6xl mx-auto w-full px-6 py-8">
         <Routes>
           <Route path="/" element={<Dashboard />} />
+          <Route path="/start" element={<StartReview />} />
           <Route path="/validate" element={<Validate />} />
           <Route path="/graph" element={<GraphView />} />
           <Route path="/sessions/:id" element={<SessionDetail />} />

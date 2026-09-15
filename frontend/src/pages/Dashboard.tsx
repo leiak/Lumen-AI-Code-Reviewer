@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { health } from '../api';
 
-const STEPS = [
+type Step = { n: number; title: string; desc: string; to: string; cli?: string };
+const STEPS: Step[] = [
   { n: 1, title: '看状态图', desc: '查看 LangGraph4j 编排的评审流水线拓扑', to: '/graph' },
   { n: 2, title: '校验 council.yaml', desc: '粘贴你的配置文件，检查 schema 和 reviewer 配置', to: '/validate' },
   { n: 3, title: '试用 Demo Session', desc: '看一个真实风格的评审结果（无需 API key）', to: '/sessions/rev-demo01' },
-  { n: 4, title: '跑真实评审（需 API key）', desc: '设置 ANTHROPIC_API_KEY，从 CLI 跑 review run', to: '#', cli: 'java -jar review.jar run HEAD' },
+  { n: 4, title: '启动一次真实评审', desc: '粘贴 yaml + 选 git ref，从浏览器点开始（需 API key）', to: '/start' },
 ];
 
 export default function Dashboard() {
@@ -67,7 +68,11 @@ export default function Dashboard() {
       </section>
 
       {/* Quick actions */}
-      <section className="grid sm:grid-cols-3 gap-3">
+      <section className="grid sm:grid-cols-4 gap-3">
+        <Link to="/start" className="block p-4 bg-council-500 text-white border border-council-700 rounded hover:bg-council-700">
+          <div className="font-semibold">▶ 启动评审</div>
+          <div className="text-sm text-council-50 mt-1">粘贴 yaml，选 git ref，开始</div>
+        </Link>
         <Link to="/validate" className="block p-4 bg-white border border-slate-200 rounded hover:border-council-500">
           <div className="font-semibold text-council-700">校验配置</div>
           <div className="text-sm text-slate-500 mt-1">检查一个 council.yaml</div>
